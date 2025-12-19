@@ -15,7 +15,7 @@ export const theme = {
     Slate50: '#F8FAFC',  
     
     // 주요 색상 (Indigo/Blue 계열)
-    Primary: '#2563EB',
+    Primary: '#3667D3',
     PrimaryLight: '#DBEAFE',
     PrimaryText: '#1E40AF',
     
@@ -121,8 +121,8 @@ export const theme = {
       font-family: 'Noto Sans KR', sans-serif;
       font-size: 1rem;
       font-style: normal;
-      font-weight: 400;
-      line-height: 130%; /* 1.82rem */
+      font-weight: 200;
+      line-height: 1.5; /* 1.82rem */
     `,
     Body4: css`
       font-family: 'Noto Sans KR', sans-serif;
