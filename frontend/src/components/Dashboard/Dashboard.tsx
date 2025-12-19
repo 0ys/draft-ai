@@ -70,11 +70,11 @@ const Wrapper = styled.main`
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background-color: ${({ theme }) => theme.colors.Black1};
+  background-color: ${({ theme }) => theme.colors.Slate50};
 `;
 
 const LeftColumn = styled.div`
-  width: 20rem;
+  width: 25rem;
   flex-shrink: 0;
 `;
 
@@ -84,7 +84,7 @@ const CenterColumn = styled.div`
 `;
 
 const RightColumn = styled.div`
-  width: 20rem;
+  width: 28rem;
   flex-shrink: 0;
 `;
 

@@ -78,13 +78,13 @@ const RootButton = styled.button<{ $isSelected: boolean }>`
   cursor: pointer;
 
   background-color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.SkyDark : 'transparent'};
+    $isSelected ? theme.colors.Primary : 'transparent'};
   color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.White : theme.colors.Gray3};
+    $isSelected ? theme.colors.White : theme.colors.Slate700};
 
   &:hover {
     background-color: ${({ theme, $isSelected }) =>
-      $isSelected ? theme.colors.SkyDark : theme.colors.Black3};
+      $isSelected ? theme.colors.Primary : theme.colors.Slate100};
   }
 `;
 
@@ -104,13 +104,13 @@ const FolderButton = styled.button<{ $isSelected: boolean; $depth: number }>`
   gap: 0.5rem;
 
   background-color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.SkyDark : 'transparent'};
+    $isSelected ? theme.colors.Primary : 'transparent'};
   color: ${({ theme, $isSelected }) =>
-    $isSelected ? theme.colors.White : theme.colors.Gray3};
+    $isSelected ? theme.colors.White : theme.colors.Slate700};
 
   &:hover {
     background-color: ${({ theme, $isSelected }) =>
-      $isSelected ? theme.colors.SkyDark : theme.colors.Black3};
+      $isSelected ? theme.colors.Primary : theme.colors.Slate100};
   }
 `;
 
@@ -122,6 +122,6 @@ const FolderName = styled.span`
 `;
 
 const FolderCount = styled.span`
-  ${({ theme }) => theme.fonts.Body3};
+  ${({ theme }) => theme.fonts.Caption};
   opacity: 0.7;
 `;
