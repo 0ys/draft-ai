@@ -13,11 +13,14 @@ cd ai
 2. 가상환경 활성화
 
 ```bash
+# 가상환경 생성
+python -m venv .venv
+
 # macOS / Linux
 source .venv/bin/activate
 
-# Windows (참고)
-.venv\\Scripts\\activate
+# Windows
+.venv\Scripts\activate
 ```
 
 3. 패키지 설치
