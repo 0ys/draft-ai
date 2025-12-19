@@ -2,6 +2,7 @@
 
 import styled from '@emotion/styled';
 import { useRef, useState } from 'react';
+import { SvgIcon } from '@/components/icons';
 
 type FileUploadButtonProps = {
   onUpload: (file: File) => Promise<void>;
@@ -15,13 +16,24 @@ export function FileUploadButton({ onUpload }: FileUploadButtonProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // 파일 크기 제한: 50MB
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      alert('파일 크기는 최대 50MB까지 업로드 가능합니다.');
+      return;
+    }
+
     const allowedTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/msword',
     ];
     
-    if (!allowedTypes.includes(file.type)) {
+    // 파일 확장자도 체크 (MIME type이 제대로 감지되지 않는 경우 대비)
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    const allowedExtensions = ['pdf', 'docx', 'doc'];
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension || '')) {
       alert('PDF 또는 DOCX 파일만 업로드 가능합니다.');
       return;
     }
@@ -31,7 +43,8 @@ export function FileUploadButton({ onUpload }: FileUploadButtonProps) {
       await onUpload(file);
     } catch (error) {
       console.error('파일 업로드 실패:', error);
-      alert('파일 업로드에 실패했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
+      alert(`파일 업로드에 실패했습니다: ${errorMessage}`);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -53,7 +66,14 @@ export function FileUploadButton({ onUpload }: FileUploadButtonProps) {
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
       >
-        {isUploading ? '업로드 중...' : '📄 문서 업로드'}
+        {isUploading ? (
+          '업로드 중...'
+        ) : (
+          <>
+            <SvgIcon name="upload" size={20} color="currentColor" />
+            <span>새 문서 업로드</span>
+          </>
+        )}
       </Button>
     </Wrapper>
   );
@@ -72,10 +92,12 @@ const Button = styled.button`
   color: ${({ theme }) => theme.colors.White};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  ${({ theme }) => theme.fonts.Body2};
-  font-weight: 500;
-  transition: background-color 0.2s;
+  ${({ theme }) => theme.fonts.Body3};
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.colors.Primary};

@@ -1,6 +1,7 @@
 'use client';
 
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 import { useState } from 'react';
 import { Folder } from '@/types';
 import { FolderTree } from '@/components/Knowledge/FolderTree';
@@ -20,6 +21,7 @@ export function KnowledgeSidebar({
   onFolderSelect,
   onDocumentUpload,
 }: KnowledgeSidebarProps) {
+  const theme = useTheme();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const toggleFolder = (path: string) => {
@@ -37,7 +39,7 @@ export function KnowledgeSidebar({
       {/* 1. 상단 로고 영역 */}
       <BrandArea>
         <LogoIcon>
-          <SvgIcon name="file-text" size={24} color="#2563EB" />
+          <SvgIcon name="file-text" size={25} color={theme.colors.Primary} />
         </LogoIcon>
         <LogoText>
           Draft <span>AI</span>
@@ -71,10 +73,10 @@ export function KnowledgeSidebar({
       {/* 4. 하단 프로필 영역 */}
       <Footer>
         <UserProfile>
-          <Avatar>MK</Avatar>
+          <Avatar>YS</Avatar>
           <UserInfo>
-            <UserName>김민원 주무관</UserName>
-            <UserDept>서울시 주택정책과</UserDept>
+            <UserName>공예슬</UserName>
+            <UserDept>서울시 식품의약부</UserDept>
           </UserInfo>
           <SettingsButton>
             <SvgIcon name="settings" size={20} color="#94A3B8" />
@@ -90,8 +92,7 @@ export function KnowledgeSidebar({
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  width: 280px;
-  height: 100vh;
+  height: 100%;
   background-color: ${({ theme }) => theme.colors.White};
   border-right: 1px solid ${({ theme }) => theme.colors.Slate200};
 `;
@@ -110,8 +111,7 @@ const LogoIcon = styled.div`
 `;
 
 const LogoText = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 800;
+  ${({ theme }) => theme.fonts.Title1};
   color: ${({ theme }) => theme.colors.Slate950};
   letter-spacing: -0.02em;
   
