@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "draft-ai frontend",
-  description: "Next.js + TypeScript + Tailwind app for draft-ai"
+  description: "AI-powered report drafting engine with RAG-based source verification."
 };
 
 export default function RootLayout({
@@ -13,8 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-slate-950 text-slate-50 antialiased">
-        {children}
+      <body>
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
