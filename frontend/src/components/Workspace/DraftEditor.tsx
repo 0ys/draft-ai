@@ -54,14 +54,14 @@ const Toolbar = styled.div`
 `;
 
 const Title = styled.h3`
-  ${({ theme }) => theme.fonts.Title3};
-  color: ${({ theme }) => theme.colors.Gray1};
+  ${({ theme }) => theme.fonts.Title2};
+  color: ${({ theme }) => theme.colors.Slate950};
 `;
 
 const CopyButton = styled.button`
   padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Black3};
-  color: ${({ theme }) => theme.colors.Gray2};
+  background-color: ${({ theme }) => theme.colors.Slate100};
+  color: ${({ theme }) => theme.colors.Slate700};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   ${({ theme }) => theme.fonts.Body2};
@@ -73,7 +73,7 @@ const CopyButton = styled.button`
   gap: 0.5rem;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.Black4};
+    background-color: ${({ theme }) => theme.colors.Slate200};
   }
 `;
 
@@ -81,22 +81,22 @@ const Editor = styled.textarea`
   flex: 1;
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Black3};
-  border: 1px solid ${({ theme }) => theme.colors.Black4};
+  background-color: ${({ theme }) => theme.colors.Slate100};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.Gray1};
+  color: ${({ theme }) => theme.colors.Slate950};
   ${({ theme }) => theme.fonts.Body1};
   font-family: 'Courier New', monospace;
   line-height: 1.6;
   resize: none;
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.Gray5};
+    color: ${({ theme }) => theme.colors.Slate400};
   }
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.Sky};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Sky}33;
+    border-color: ${({ theme }) => theme.colors.Primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Primary}33;
   }
 `;

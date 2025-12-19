@@ -1,90 +1,162 @@
-// Theme 설정
+import { css } from '@emotion/react';
+
 export const theme = {
   colors: {
-    // 기본 색상
     White: '#FFFFFF',
     Black: '#000000',
-    Black1: '#0F172A', // slate-950
-    Black2: '#1E293B', // slate-900
-    Black3: '#334155', // slate-800
-    Black4: '#475569', // slate-700
     
-    // 주요 색상
-    Sky: '#0EA5E9', // sky-500
-    SkyLight: '#38BDF8', // sky-400
-    SkyDark: '#0284C7', // sky-600
+    // Grayscale (Slate 계열)
+    Slate950: '#0F172A',
+    Slate700: '#334155', 
+    Slate500: '#64748B',
+    Slate400: '#94A3B8',
+    Slate200: '#E2E8F0', 
+    Slate100: '#F1F5F9',
+    Slate50: '#F8FAFC',  
     
-    // 상태 색상
-    Green: '#10B981', // green-500
-    Yellow: '#F59E0B', // yellow-500
-    Red: '#EF4444', // red-500
+    // 주요 색상 (Indigo/Blue 계열)
+    Primary: '#2563EB',
+    PrimaryLight: '#DBEAFE',
+    PrimaryText: '#1E40AF',
     
-    // 텍스트 색상
-    Gray1: '#F1F5F9', // slate-100
-    Gray2: '#E2E8F0', // slate-200
-    Gray3: '#CBD5E1', // slate-300
-    Gray4: '#94A3B8', // slate-400
-    Gray5: '#64748B', // slate-500
+    // 상태 및 강조 색상
+    Green: '#10B981',
+    GreenLight: '#ECFDF5',
+    Red: '#EF4444',
   },
+  
   fonts: {
-    Title1: `
-      font-size: 2.5rem;
-      font-weight: 700;
-      line-height: 1.2;
+    Head0: css`
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 3rem;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 130%; /* 5.2rem */
     `,
-    Title2: `
+    Head1: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 2.4rem;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 130%; /* 4.16rem */
+    `,
+    Head2: css`
+      font-family: 'Noto Sans KR', sans-serif;
       font-size: 2rem;
+      font-style: normal;
       font-weight: 700;
-      line-height: 1.3;
+      line-height: 130%; /* 3.9rem */
     `,
-    Title3: `
-      font-size: 1.5rem;
+    Head3: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.8rem;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 130%; /* 3.38rem */
+    `,
+    Head4: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.6rem;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 130%; /* 3.12rem */
+    `,
+    Title1: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 2rem;
+      font-style: normal;
       font-weight: 600;
-      line-height: 1.4;
+      line-height: 130%; /* 2.08rem */
     `,
-    Body1: `
+    Title2: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.8rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 130%; /* 2.08rem */
+    `,
+    Title3: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.4rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 130%; /* 2.08rem */
+    `,
+    Title4: css`
+      font-family: 'Noto Sans KR', sans-serif;
       font-size: 1rem;
-      font-weight: 400;
-      line-height: 1.5;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 130%; /* 2.08rem */
     `,
-    Body2: `
-      font-size: 0.875rem;
-      font-weight: 400;
-      line-height: 1.5;
+    Title5: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.6rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 130%; /* 2.08rem */
     `,
-    Body3: `
+    Title6: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.4rem;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 130%; /* 2.08rem */
+    `,
+    Body1: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.4rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 130%; /* 2.08rem */
+    `,
+    Body2: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1.2rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 130%; /* 1.69rem */
+    `,
+    Body3: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 1rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 130%; /* 1.82rem */
+    `,
+    Body4: css`
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.8rem;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 130%; /* 1.56rem */
+    `,
+    Caption: css`
+      font-family: 'Noto Sans KR', sans-serif;
       font-size: 0.75rem;
       font-weight: 400;
-      line-height: 1.5;
-    `,
-    EnTitle1: `
-      font-size: 2rem;
-      font-weight: 600;
-      line-height: 1.3;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    `,
-    EnTitle2: `
-      font-size: 1.25rem;
-      font-weight: 600;
       line-height: 1.4;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     `,
   },
+
   spacing: {
-    xs: '0.25rem',
-    sm: '0.5rem',
-    md: '1rem',
-    lg: '1.5rem',
-    xl: '2rem',
-    xxl: '3rem',
+    xs: '0.25rem',   // 4px
+    sm: '0.5rem',    // 8px
+    md: '1rem',      // 16px
+    lg: '1.5rem',    // 24px
+    xl: '2rem',      // 32px
   },
+
   borderRadius: {
-    sm: '0.5rem',
-    md: '0.75rem',
-    lg: '1rem',
-    xl: '1.5rem',
+    sm: '0.375rem',
+    md: '0.5rem',
+    lg: '0.75rem',
+    pill: '9999px',
   },
+
+  shadows: {
+    card: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  }
 };
 
 export type Theme = typeof theme;
-

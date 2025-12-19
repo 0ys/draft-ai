@@ -38,7 +38,7 @@ export function DocumentStatusBadge({ status }: DocumentStatusBadgeProps) {
 const Badge = styled.span<{ $bgColor: string; $textColor: string }>`
   padding: 0.25rem 0.5rem;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  ${({ theme }) => theme.fonts.Body3};
+  ${({ theme }) => theme.fonts.Caption};
   font-weight: 500;
   background-color: ${({ $bgColor }) => $bgColor};
   color: ${({ $textColor }) => $textColor};

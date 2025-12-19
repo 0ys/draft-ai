@@ -17,7 +17,7 @@ export function GenerateButton({ onClick, disabled }: GenerateButtonProps) {
 
 const Button = styled.button`
   padding: 0.5rem 1.5rem;
-  background-color: ${({ theme }) => theme.colors.SkyDark};
+  background-color: ${({ theme }) => theme.colors.Primary};
   color: ${({ theme }) => theme.colors.White};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
@@ -28,11 +28,12 @@ const Button = styled.button`
   white-space: nowrap;
 
   &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.Sky};
+    background-color: ${({ theme }) => theme.colors.Primary};
+    opacity: 0.9;
   }
 
   &:disabled {
-    background-color: ${({ theme }) => theme.colors.Black4};
+    background-color: ${({ theme }) => theme.colors.Slate200};
     cursor: not-allowed;
   }
 `;

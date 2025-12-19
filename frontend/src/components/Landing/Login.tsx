@@ -23,7 +23,7 @@ export function Login() {
       <Container>
         <Header>
           <Title>draft-ai</Title>
-          <Subtitle>민원 Q&A 기반 보고서 초안 생성기</Subtitle>
+          <Subtitle>RAG 기반 보고서 초안 생성기</Subtitle>
         </Header>
 
         <Form onSubmit={handleSubmit}>
@@ -70,17 +70,17 @@ const Wrapper = styled.main`
   justify-content: center;
   min-height: 100vh;
   padding: 2rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Black1};
+  background-color: ${({ theme }) => theme.colors.Slate50};
 `;
 
 const Container = styled.div`
   width: 100%;
   max-width: 28rem;
   padding: 2rem;
-  background-color: ${({ theme }) => theme.colors.Black2};
-  border: 1px solid ${({ theme }) => theme.colors.Black4};
+  background-color: ${({ theme }) => theme.colors.White};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: ${({ theme }) => theme.shadows.card};
 `;
 
 const Header = styled.div`
@@ -89,14 +89,14 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  ${({ theme }) => theme.fonts.Title2};
-  color: ${({ theme }) => theme.colors.Gray1};
+  ${({ theme }) => theme.fonts.Title1};
+  color: ${({ theme }) => theme.colors.Slate950};
   margin-bottom: 0.5rem;
 `;
 
 const Subtitle = styled.p`
   ${({ theme }) => theme.fonts.Body2};
-  color: ${({ theme }) => theme.colors.Gray4};
+  color: ${({ theme }) => theme.colors.Slate500};
 `;
 
 const Form = styled.form`
@@ -113,48 +113,48 @@ const FormGroup = styled.div`
 const Label = styled.label`
   ${({ theme }) => theme.fonts.Body2};
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.Gray3};
+  color: ${({ theme }) => theme.colors.Slate700};
   margin-bottom: 0.5rem;
 `;
 
 const Input = styled.input`
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Black3};
-  border: 1px solid ${({ theme }) => theme.colors.Black4};
+  background-color: ${({ theme }) => theme.colors.Slate100};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.Gray1};
+  color: ${({ theme }) => theme.colors.Slate950};
   ${({ theme }) => theme.fonts.Body1};
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.Gray5};
+    color: ${({ theme }) => theme.colors.Slate400};
   }
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.Sky};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Sky}33;
+    border-color: ${({ theme }) => theme.colors.Primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Primary}33;
   }
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: ${({ theme }) => theme.colors.SkyDark};
+  background-color: ${({ theme }) => theme.colors.Primary};
   color: ${({ theme }) => theme.colors.White};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.md};
   ${({ theme }) => theme.fonts.Body1};
-  font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
 
   &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.Sky};
+    background-color: ${({ theme }) => theme.colors.Primary};
+    opacity: 0.9;
   }
 
   &:disabled {
-    background-color: ${({ theme }) => theme.colors.Black4};
+    background-color: ${({ theme }) => theme.colors.Slate200};
     cursor: not-allowed;
   }
 `;
@@ -162,13 +162,13 @@ const SubmitButton = styled.button`
 const MvpNotice = styled.div`
   margin-top: 1.5rem;
   padding: 1rem;
-  background-color: ${({ theme }) => theme.colors.Black3}80;
-  border: 1px solid ${({ theme }) => theme.colors.Black4};
+  background-color: ${({ theme }) => theme.colors.Slate100};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   
   p {
-    ${({ theme }) => theme.fonts.Body3};
-    color: ${({ theme }) => theme.colors.Gray4};
+    ${({ theme }) => theme.fonts.Caption};
+    color: ${({ theme }) => theme.colors.Slate500};
     text-align: center;
     margin: 0;
   }

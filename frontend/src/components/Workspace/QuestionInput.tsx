@@ -22,20 +22,20 @@ export function QuestionInput({ value, onChange, placeholder }: QuestionInputPro
 const Textarea = styled.textarea`
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Black3};
-  border: 1px solid ${({ theme }) => theme.colors.Black4};
+  background-color: ${({ theme }) => theme.colors.Slate100};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.Gray1};
+  color: ${({ theme }) => theme.colors.Slate950};
   ${({ theme }) => theme.fonts.Body1};
   resize: none;
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.Gray5};
+    color: ${({ theme }) => theme.colors.Slate400};
   }
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.colors.Sky};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Sky}33;
+    border-color: ${({ theme }) => theme.colors.Primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Primary}33;
   }
 `;

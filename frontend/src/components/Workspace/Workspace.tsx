@@ -93,12 +93,13 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: ${({ theme }) => theme.colors.Black1};
+  background-color: ${({ theme }) => theme.colors.Slate50};
 `;
 
 const InputSection = styled.div`
   padding: 1.5rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.Black4};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.Slate200};
+  background-color: ${({ theme }) => theme.colors.White};
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -112,7 +113,7 @@ const FormGroup = styled.div`
 const Label = styled.label`
   ${({ theme }) => theme.fonts.Body2};
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.Gray3};
+  color: ${({ theme }) => theme.colors.Slate700};
   margin-bottom: 0.5rem;
 `;
 
@@ -138,12 +139,12 @@ const EmptyState = styled.div`
 `;
 
 const EmptyTitle = styled.p`
-  ${({ theme }) => theme.fonts.Title3};
-  color: ${({ theme }) => theme.colors.Gray5};
+  ${({ theme }) => theme.fonts.Title2};
+  color: ${({ theme }) => theme.colors.Slate400};
   margin-bottom: 0.5rem;
 `;
 
 const EmptyText = styled.p`
   ${({ theme }) => theme.fonts.Body2};
-  color: ${({ theme }) => theme.colors.Gray5};
+  color: ${({ theme }) => theme.colors.Slate400};
 `;

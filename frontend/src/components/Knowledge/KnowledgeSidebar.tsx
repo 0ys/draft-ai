@@ -2,10 +2,10 @@
 
 import styled from '@emotion/styled';
 import { useState } from 'react';
-import { Folder, Document } from '@/types';
+import { Folder } from '@/types';
 import { FolderTree } from '@/components/Knowledge/FolderTree';
 import { FileUploadButton } from '@/components/Knowledge/FileUploadButton';
-import { DocumentStatusBadge } from '@/components/Knowledge/DocumentStatusBadge';
+import { SvgIcon } from '@/components/icons';
 
 type KnowledgeSidebarProps = {
   folders: Folder[];
@@ -34,97 +34,200 @@ export function KnowledgeSidebar({
 
   return (
     <Wrapper>
-      <Header>
-        <Title>Knowledge Library</Title>
+      {/* 1. 상단 로고 영역 */}
+      <BrandArea>
+        <LogoIcon>
+          <SvgIcon name="file-text" size={24} color="#2563EB" />
+        </LogoIcon>
+        <LogoText>
+          Draft <span>AI</span>
+        </LogoText>
+      </BrandArea>
+
+      {/* 2. 업로드 버튼 영역 */}
+      <UploadSection>
         <FileUploadButton
           onUpload={(file) => {
             const folderPath = selectedFolderPath || 'root/2024';
             return onDocumentUpload(file, folderPath);
           }}
         />
-      </Header>
+      </UploadSection>
 
-      <TreeContainer>
-        <FolderTree
-          folders={folders}
-          selectedFolderPath={selectedFolderPath}
-          expandedFolders={expandedFolders}
-          onFolderSelect={onFolderSelect}
-          onToggleFolder={toggleFolder}
-        />
-      </TreeContainer>
+      {/* 3. 메인 네비게이션 (Knowledge Base) */}
+      <NavArea>
+        <SectionLabel>KNOWLEDGE BASE</SectionLabel>
+        <TreeContainer>
+          <FolderTree
+            folders={folders}
+            selectedFolderPath={selectedFolderPath}
+            expandedFolders={expandedFolders}
+            onFolderSelect={onFolderSelect}
+            onToggleFolder={toggleFolder}
+          />
+        </TreeContainer>
+      </NavArea>
 
-      {selectedFolderPath && (
-        <DocumentList>
-          <DocumentListTitle>문서 목록</DocumentListTitle>
-          {folders
-            .find(f => f.path === selectedFolderPath)
-            ?.documents.map((doc) => (
-              <DocumentItem key={doc.id}>
-                <DocumentName>{doc.fileName}</DocumentName>
-                <DocumentStatusBadge status={doc.status} />
-              </DocumentItem>
-            ))}
-        </DocumentList>
-      )}
+      {/* 4. 하단 프로필 영역 */}
+      <Footer>
+        <UserProfile>
+          <Avatar>MK</Avatar>
+          <UserInfo>
+            <UserName>김민원 주무관</UserName>
+            <UserDept>서울시 주택정책과</UserDept>
+          </UserInfo>
+          <SettingsButton>
+            <SvgIcon name="settings" size={20} color="#94A3B8" />
+          </SettingsButton>
+        </UserProfile>
+      </Footer>
     </Wrapper>
   );
 }
 
+// --- Styled Components ---
+
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  height: 100%;
-  background-color: ${({ theme }) => theme.colors.Black2};
-  border-right: 1px solid ${({ theme }) => theme.colors.Black4};
+  width: 280px;
+  height: 100vh;
+  background-color: ${({ theme }) => theme.colors.White};
+  border-right: 1px solid ${({ theme }) => theme.colors.Slate200};
 `;
 
-const Header = styled.div`
-  padding: 1rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.Black4};
+const BrandArea = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
 `;
 
-const Title = styled.h2`
-  ${({ theme }) => theme.fonts.Title3};
-  color: ${({ theme }) => theme.colors.Gray1};
-  margin-bottom: 0.75rem;
+const LogoIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LogoText = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: ${({ theme }) => theme.colors.Slate950};
+  letter-spacing: -0.02em;
+  
+  span {
+    color: ${({ theme }) => theme.colors.Primary};
+  }
+`;
+
+const UploadSection = styled.div`
+  padding: 0 16px 24px 16px;
+  
+  /* FileUploadButton 내부 스타일을 덮어씌우기 위한 설정 */
+  button {
+    width: 100%;
+    height: 48px;
+    background-color: ${({ theme }) => theme.colors.Primary};
+    color: white;
+    border-radius: ${({ theme }) => theme.borderRadius.md};
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background-color: #1d4ed8;
+    }
+  }
+`;
+
+const NavArea = styled.nav`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const SectionLabel = styled.div`
+  padding: 0 20px 12px 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.Slate400};
+  letter-spacing: 0.05em;
 `;
 
 const TreeContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  padding: 0 12px;
+  
+  /* 스크롤바 커스텀 */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.colors.Slate200};
+    border-radius: 10px;
+  }
 `;
 
-const DocumentList = styled.div`
-  border-top: 1px solid ${({ theme }) => theme.colors.Black4};
-  padding: 1rem;
-  max-height: 16rem;
-  overflow-y: auto;
+const Footer = styled.div`
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.Slate100};
+  background-color: ${({ theme }) => theme.colors.Slate50};
 `;
 
-const DocumentListTitle = styled.h3`
-  ${({ theme }) => theme.fonts.Body2};
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.Gray3};
-  margin-bottom: 0.5rem;
-`;
-
-const DocumentItem = styled.div`
+const UserProfile = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.Black3};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  ${({ theme }) => theme.fonts.Body2};
+  gap: 12px;
 `;
 
-const DocumentName = styled.span`
-  color: ${({ theme }) => theme.colors.Gray2};
+const Avatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #DBEAFE;
+  color: #2563EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+`;
+
+const UserInfo = styled.div`
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+`;
+
+const UserName = styled.span`
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.Slate950};
+`;
+
+const UserDept = styled.span`
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.Slate500};
+`;
+
+const SettingsButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.Slate200};
+  }
 `;

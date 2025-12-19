@@ -68,7 +68,7 @@ const HiddenInput = styled.input`
 const Button = styled.button`
   width: 100%;
   padding: 0.5rem 1rem;
-  background-color: ${({ theme }) => theme.colors.SkyDark};
+  background-color: ${({ theme }) => theme.colors.Primary};
   color: ${({ theme }) => theme.colors.White};
   border: none;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
@@ -78,11 +78,12 @@ const Button = styled.button`
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.Sky};
+    background-color: ${({ theme }) => theme.colors.Primary};
+    opacity: 0.9;
   }
 
   &:disabled {
-    background-color: ${({ theme }) => theme.colors.Black4};
+    background-color: ${({ theme }) => theme.colors.Slate200};
     cursor: not-allowed;
   }
 `;
