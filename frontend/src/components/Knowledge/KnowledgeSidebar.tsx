@@ -39,7 +39,7 @@ export function KnowledgeSidebar({
       {/* 1. 상단 로고 영역 */}
       <BrandArea>
         <LogoIcon>
-          <SvgIcon name="file-text" size={25} color={theme.colors.Primary} />
+          <SvgIcon name="draft" size={30} color={theme.colors.Primary} />
         </LogoIcon>
         <LogoText>
           Draft <span>AI</span>
@@ -50,7 +50,7 @@ export function KnowledgeSidebar({
       <UploadSection>
         <FileUploadButton
           onUpload={(file) => {
-            const folderPath = selectedFolderPath || 'root/2024';
+            const folderPath = selectedFolderPath || 'root/2025';
             return onDocumentUpload(file, folderPath);
           }}
         />
@@ -79,7 +79,7 @@ export function KnowledgeSidebar({
             <UserDept>서울시 식품의약부</UserDept>
           </UserInfo>
           <SettingsButton>
-            <SvgIcon name="settings" size={20} color="#94A3B8" />
+            <SvgIcon name="setting" size={20} color="#94A3B8" />
           </SettingsButton>
         </UserProfile>
       </Footer>
