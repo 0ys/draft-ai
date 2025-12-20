@@ -280,3 +280,65 @@ async def list_folders(
             status_code=500,
             detail=f"폴더 목록 조회 실패: {str(e)}"
         )
+
+
+@router.delete("/{document_id}")
+async def delete_document(
+    document_id: str,  # UUID 형식
+    user_id: str = "00000000-0000-0000-0000-000000000001",  # UUID 형식
+    db: Client = Depends(get_db),
+):
+    """
+    문서를 삭제합니다 (소프트 딜리트).
+    
+    - **document_id**: 삭제할 문서 ID (UUID)
+    - **user_id**: 사용자 ID (UUID 형식)
+    """
+    try:
+        # 문서 존재 여부 및 소유자 확인
+        doc_result = (
+            db.table("documents")
+            .select("*")
+            .eq("id", document_id)
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        
+        if not doc_result.data or len(doc_result.data) == 0:
+            raise HTTPException(
+                status_code=404,
+                detail="문서를 찾을 수 없거나 이미 삭제되었습니다."
+            )
+        
+        # 소프트 딜리트: deleted_at 필드 업데이트
+        update_result = (
+            db.table("documents")
+            .update({
+                "deleted_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            })
+            .eq("id", document_id)
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        
+        if not update_result.data:
+            raise HTTPException(
+                status_code=500,
+                detail="문서 삭제에 실패했습니다."
+            )
+        
+        return {
+            "success": True,
+            "message": "문서가 성공적으로 삭제되었습니다.",
+            "document_id": document_id,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"문서 삭제 실패: {str(e)}"
+        )

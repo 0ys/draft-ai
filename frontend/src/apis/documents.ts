@@ -93,3 +93,28 @@ export async function getFoldersFromBackend(
     };
   }
 }
+
+/**
+ * 문서를 삭제합니다.
+ */
+export async function deleteDocumentFromBackend(
+  documentId: string,  // UUID 형식
+  userId: string = '00000000-0000-0000-0000-000000000001'  // UUID 형식
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await client.delete(`/api/documents/${documentId}`, {
+      params: { user_id: userId },
+    });
+
+    return {
+      success: true,
+    };
+  } catch (error: any) {
+    console.error('❌ 문서 삭제 실패:', error);
+    const errorMessage = error.response?.data?.detail || error.message || '알 수 없는 오류가 발생했습니다.';
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+}

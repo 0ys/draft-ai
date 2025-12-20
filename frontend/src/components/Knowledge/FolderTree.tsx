@@ -1,7 +1,8 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { Folder } from '@/types';
+import { useState } from 'react';
+import { Folder, Document } from '@/types';
 import { getFolderName } from '@/utils';
 import { SvgIcon } from '@/components/icons';
 
@@ -12,6 +13,7 @@ type FolderTreeProps = {
   onFolderSelect: (id: string | null) => void;
   onToggleFolder: (id: string) => void;
   onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
+  onDocumentDelete?: (documentId: string, folderId: string) => Promise<void>;  // 문서 삭제 핸들러
 };
 
 function getDocumentIcon(fileName: string): { name: string; color: string } {
@@ -33,7 +35,10 @@ export function FolderTree({
   onFolderSelect,
   onToggleFolder,
   onLoadDocuments,
+  onDocumentDelete,
 }: FolderTreeProps) {
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
+
   // 계층 구조를 위한 정렬 (parentId가 null인 것부터, 그 다음 자식들)
   const sortedFolders = [...folders].sort((a, b) => {
     // 루트 폴더(parentId가 null)를 먼저
@@ -51,6 +56,26 @@ export function FolderTree({
     // 폴더를 확장할 때 문서가 없으면 로드
     if (!wasExpanded && folder.documents.length === 0 && onLoadDocuments) {
       await onLoadDocuments(folder.id);
+    }
+  };
+
+  const handleDocumentClick = (document: Document, folderId: string) => {
+    // 문서 클릭 시 선택 상태 토글
+    if (selectedDocumentId === document.id) {
+      setSelectedDocumentId(null);
+    } else {
+      setSelectedDocumentId(document.id);
+    }
+  };
+
+  const handleDeleteClick = async (e: React.MouseEvent, documentId: string, folderId: string) => {
+    e.stopPropagation(); // 문서 클릭 이벤트 전파 방지
+    
+    if (window.confirm('이 문서를 삭제하시겠습니까?')) {
+      if (onDocumentDelete) {
+        await onDocumentDelete(documentId, folderId);
+        setSelectedDocumentId(null); // 삭제 후 선택 상태 초기화
+      }
     }
   };
 
@@ -80,10 +105,23 @@ export function FolderTree({
               <DocumentList>
                 {folder.documents.map((document) => {
                   const { name: iconName, color: iconColor } = getDocumentIcon(document.fileName);
+                  const isSelected = selectedDocumentId === document.id;
                   return (
-                    <DocumentItem key={document.id}>
+                    <DocumentItem 
+                      key={document.id}
+                      onClick={() => handleDocumentClick(document, folder.id)}
+                      $isSelected={isSelected}
+                    >
                       <SvgIcon name={iconName} size={25} color={iconColor} />
                       <DocumentName>{document.fileName}</DocumentName>
+                      {isSelected && (
+                        <DeleteButton
+                          onClick={(e) => handleDeleteClick(e, document.id, folder.id)}
+                          title="문서 삭제"
+                        >
+                          삭제
+                        </DeleteButton>
+                      )}
                     </DocumentItem>
                   );
                 })}
@@ -161,7 +199,7 @@ const DocumentList = styled.div`
   gap: 0.125rem;
 `;
 
-const DocumentItem = styled.div`
+const DocumentItem = styled.div<{ $isSelected: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -171,9 +209,14 @@ const DocumentItem = styled.div`
   color: ${({ theme }) => theme.colors.Slate700};
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+
+  background-color: ${({ theme, $isSelected }) =>
+    $isSelected ? theme.colors.Slate100 : 'transparent'};
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.Slate50};
+    background-color: ${({ theme, $isSelected }) =>
+      $isSelected ? theme.colors.Slate200 : theme.colors.Slate50};
     color: ${({ theme }) => theme.colors.Slate950};
   }
 
@@ -188,4 +231,25 @@ const DocumentName = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.875rem;
+`;
+
+const DeleteButton = styled.button`
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  background-color: ${({ theme }) => theme.colors.Red};
+  color: white;
+  border: none;
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  ${({ theme }) => theme.fonts.Body4};
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-left: auto;
+
+  &:hover {
+    background-color: #DC2626;
+  }
+
+  &:active {
+    background-color: #B91C1C;
+  }
 `;

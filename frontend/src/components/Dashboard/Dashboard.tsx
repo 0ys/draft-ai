@@ -6,12 +6,14 @@ import { KnowledgeSidebar } from '@/components/Knowledge/KnowledgeSidebar';
 import { Workspace } from '@/components/Workspace/Workspace';
 import { EvidencePanel } from '@/components/Evidence/EvidencePanel';
 import { Folder, DraftResult, Document } from '@/types';
-import { uploadDocument, getFolders, getDocuments, generateDraft } from '@/app/actions';
+import { uploadDocument, getFolders, getDocuments, generateDraft, deleteDocument } from '@/app/actions';
 
 export function Dashboard() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [isEvidencePanelOpen, setIsEvidencePanelOpen] = useState(true);
 
   useEffect(() => {
     loadFolders();
@@ -20,6 +22,24 @@ export function Dashboard() {
   const loadFolders = async () => {
     const folderList = await getFolders();
     setFolders(folderList);
+    
+    // 열려있던 폴더의 문서를 다시 로드
+    if (expandedFolders.size > 0) {
+      const foldersToLoad = Array.from(expandedFolders).filter(id => 
+        folderList.some(f => f.id === id)
+      );
+      
+      for (const folderId of foldersToLoad) {
+        const documents = await getDocuments(folderId);
+        setFolders(prevFolders => 
+          prevFolders.map(f => 
+            f.id === folderId 
+              ? { ...f, documents }
+              : f
+          )
+        );
+      }
+    }
   };
 
   const handleFolderSelect = async (folderId: string | null) => {
@@ -56,6 +76,18 @@ export function Dashboard() {
     }
   };
 
+  const handleDocumentDelete = async (documentId: string, folderId: string) => {
+    const result = await deleteDocument(documentId);
+    if (result.success) {
+      // 삭제 후 해당 폴더의 문서 목록 새로고침
+      await handleLoadDocuments(folderId);
+      // 폴더 목록도 새로고침하여 문서 개수 업데이트
+      await loadFolders();
+    } else {
+      alert(result.error || '문서 삭제에 실패했습니다.');
+    }
+  };
+
   const handleGenerate = async (
     question: string,
     folderId: string | null
@@ -71,9 +103,20 @@ export function Dashboard() {
         <KnowledgeSidebar
           folders={folders}
           selectedFolderId={selectedFolderId}
+          expandedFolders={expandedFolders}
           onFolderSelect={handleFolderSelect}
           onDocumentUpload={handleDocumentUpload}
           onLoadDocuments={handleLoadDocuments}
+          onDocumentDelete={handleDocumentDelete}
+          onToggleFolder={(id: string) => {
+            const newExpanded = new Set(expandedFolders);
+            if (newExpanded.has(id)) {
+              newExpanded.delete(id);
+            } else {
+              newExpanded.add(id);
+            }
+            setExpandedFolders(newExpanded);
+          }}
         />
       </LeftColumn>
 
@@ -85,8 +128,18 @@ export function Dashboard() {
         />
       </CenterColumn>
 
-      <RightColumn>
-        <EvidencePanel evidences={draftResult?.evidences || []} />
+      <RightColumn $isOpen={isEvidencePanelOpen}>
+        {isEvidencePanelOpen ? (
+          <EvidencePanel 
+            evidences={draftResult?.evidences || []} 
+            onClose={() => setIsEvidencePanelOpen(false)}
+          />
+        ) : (
+          <ToggleButton onClick={() => setIsEvidencePanelOpen(true)}>
+            <ToggleIcon>📚</ToggleIcon>
+            <ToggleText>참고 문헌</ToggleText>
+          </ToggleButton>
+        )}
       </RightColumn>
     </Wrapper>
   );
@@ -109,8 +162,43 @@ const CenterColumn = styled.div`
   min-width: 0;
 `;
 
-const RightColumn = styled.div`
-  width: 28rem;
+const RightColumn = styled.div<{ $isOpen: boolean }>`
+  width: ${({ $isOpen }) => ($isOpen ? '28rem' : '3rem')};
   flex-shrink: 0;
+  position: relative;
+  transition: width 0.3s ease;
+`;
+
+const ToggleButton = styled.button`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.White};
+  border: none;
+  border-left: 1px solid ${({ theme }) => theme.colors.Slate200};
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 1rem 0;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.Slate50};
+  }
+`;
+
+const ToggleIcon = styled.span`
+  font-size: 1.5rem;
+  line-height: 1;
+`;
+
+const ToggleText = styled.span`
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  ${({ theme }) => theme.fonts.Body2};
+  color: ${({ theme }) => theme.colors.Slate700};
+  font-weight: 500;
 `;
 
