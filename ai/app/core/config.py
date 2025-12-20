@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     # Supabase 설정
     supabase_url: Optional[str] = None
     supabase_key: Optional[str] = None
+    
+    # OpenAI 설정
+    openai_api_key: Optional[str] = None
+    
+    # LlamaParse 설정
+    llama_cloud_api_key: Optional[str] = None
 
     class Config:
         env_file = ".env"
