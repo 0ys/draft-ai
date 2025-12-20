@@ -6,14 +6,22 @@ import { EvidenceCard } from '@/components/Evidence/EvidenceCard';
 
 type EvidencePanelProps = {
   evidences: QAChunk[];
+  onClose?: () => void;
 };
 
-export function EvidencePanel({ evidences }: EvidencePanelProps) {
+export function EvidencePanel({ evidences, onClose }: EvidencePanelProps) {
   return (
     <Wrapper>
       <Header>
-        <Title>참고 문헌</Title>
-        <Count>{evidences.length}개의 참고 자료</Count>
+        <HeaderLeft>
+          <Title>참고 문헌</Title>
+          <Count>{evidences.length}개의 참고 자료</Count>
+        </HeaderLeft>
+        {onClose && (
+          <CloseButton onClick={onClose} aria-label="참고 문헌 패널 닫기">
+            ✕
+          </CloseButton>
+        )}
       </Header>
 
       <Content>
@@ -42,6 +50,32 @@ const Wrapper = styled.div`
 const Header = styled.div`
   padding: 1rem;
   border-bottom: 1px solid ${({ theme }) => theme.colors.Slate200};
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+`;
+
+const HeaderLeft = styled.div`
+  flex: 1;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: ${({ theme }) => theme.colors.Slate500};
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  transition: all 0.2s;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.Slate100};
+    color: ${({ theme }) => theme.colors.Slate950};
+  }
 `;
 
 const Title = styled.h2`
