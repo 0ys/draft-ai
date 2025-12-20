@@ -6,7 +6,7 @@ import { KnowledgeSidebar } from '@/components/Knowledge/KnowledgeSidebar';
 import { Workspace } from '@/components/Workspace/Workspace';
 import { EvidencePanel } from '@/components/Evidence/EvidencePanel';
 import { Folder, DraftResult, Document } from '@/types';
-import { uploadDocument, getFolders, getDocuments, generateDraft } from '@/app/actions';
+import { uploadDocument, getFolders, getDocuments, generateDraft, deleteDocument } from '@/app/actions';
 
 export function Dashboard() {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -76,6 +76,18 @@ export function Dashboard() {
     }
   };
 
+  const handleDocumentDelete = async (documentId: string, folderId: string) => {
+    const result = await deleteDocument(documentId);
+    if (result.success) {
+      // 삭제 후 해당 폴더의 문서 목록 새로고침
+      await handleLoadDocuments(folderId);
+      // 폴더 목록도 새로고침하여 문서 개수 업데이트
+      await loadFolders();
+    } else {
+      alert(result.error || '문서 삭제에 실패했습니다.');
+    }
+  };
+
   const handleGenerate = async (
     question: string,
     folderId: string | null
@@ -95,6 +107,7 @@ export function Dashboard() {
           onFolderSelect={handleFolderSelect}
           onDocumentUpload={handleDocumentUpload}
           onLoadDocuments={handleLoadDocuments}
+          onDocumentDelete={handleDocumentDelete}
           onToggleFolder={(id: string) => {
             const newExpanded = new Set(expandedFolders);
             if (newExpanded.has(id)) {

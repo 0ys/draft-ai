@@ -14,6 +14,7 @@ type KnowledgeSidebarProps = {
   onFolderSelect: (id: string | null) => void;
   onDocumentUpload: (file: File, folderId: string | null) => Promise<void>;
   onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
+  onDocumentDelete?: (documentId: string, folderId: string) => Promise<void>;  // 문서 삭제 핸들러
   onToggleFolder: (id: string) => void;
 };
 
@@ -24,6 +25,7 @@ export function KnowledgeSidebar({
   onFolderSelect,
   onDocumentUpload,
   onLoadDocuments,
+  onDocumentDelete,
   onToggleFolder,
 }: KnowledgeSidebarProps) {
   const theme = useTheme();
@@ -60,6 +62,7 @@ export function KnowledgeSidebar({
             onFolderSelect={onFolderSelect}
             onToggleFolder={onToggleFolder}
             onLoadDocuments={onLoadDocuments}
+            onDocumentDelete={onDocumentDelete}
           />
         </TreeContainer>
       </NavArea>

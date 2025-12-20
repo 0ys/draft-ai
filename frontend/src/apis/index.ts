@@ -6,5 +6,6 @@ export {
   uploadDocumentToBackend,
   getDocumentsFromBackend,
   getFoldersFromBackend,
+  deleteDocumentFromBackend,
 } from './documents';
 
