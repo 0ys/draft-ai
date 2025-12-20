@@ -1,6 +1,6 @@
 // 문서 관련 API 호출 함수
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
+import { client } from './axios';
 
 /**
  * 문서 파일을 백엔드에 업로드합니다.
@@ -17,35 +17,30 @@ export async function uploadDocumentToBackend(
       formData.append('folder_id', folderId);
     }
 
-    const url = `${API_BASE_URL}/api/documents/upload?user_id=${userId}`;
-    console.log('🌐 API 요청:', { method: 'POST', url, userId, folderId, fileName: file.name, fileSize: file.size });
+    console.log('🌐 API 요청:', { method: 'POST', url: '/api/documents/upload', userId, folderId, fileName: file.name, fileSize: file.size });
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: formData,
+    const response = await client.post('/api/documents/upload', formData, {
+      params: { user_id: userId },
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
     console.log('🌐 API 응답 상태:', response.status, response.statusText);
+    console.log('🌐 API 응답 데이터:', response.data);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: '업로드 실패' }));
-      console.error('❌ API 에러 응답:', errorData);
-      throw new Error(errorData.detail || '파일 업로드에 실패했습니다.');
-    }
-
-    const data = await response.json();
-    console.log('🌐 API 응답 데이터:', data);
     return {
       success: true,
-      filename: data.filename,
-      size: data.size,
-      documentId: data.document_id,
+      filename: response.data.filename,
+      size: response.data.size,
+      documentId: response.data.document_id,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 파일 업로드 실패:', error);
+    const errorMessage = error.response?.data?.detail || error.message || '알 수 없는 오류가 발생했습니다.';
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+      error: errorMessage,
     };
   }
 }
@@ -58,32 +53,26 @@ export async function getDocumentsFromBackend(
   folderId?: string  // UUID 형식
 ): Promise<{ success: boolean; documents?: any[]; error?: string }> {
   try {
-    let url = `${API_BASE_URL}/api/documents/list?user_id=${userId}`;
+    const params: { user_id: string; folder_id?: string } = { user_id: userId };
     if (folderId) {
-      url += `&folder_id=${encodeURIComponent(folderId)}`;
+      params.folder_id = folderId;
     }
 
-    console.log('🌐 API 요청:', { method: 'GET', url, userId, folderId });
-    const response = await fetch(url);
+    console.log('🌐 API 요청:', { method: 'GET', url: '/api/documents/list', userId, folderId });
+    const response = await client.get('/api/documents/list', { params });
     console.log('🌐 API 응답 상태:', response.status, response.statusText);
+    console.log('🌐 API 응답 데이터:', response.data);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: '조회 실패' }));
-      console.error('❌ API 에러 응답:', errorData);
-      throw new Error(errorData.detail || '문서 목록 조회에 실패했습니다.');
-    }
-
-    const data = await response.json();
-    console.log('🌐 API 응답 데이터:', data);
     return {
       success: true,
-      documents: data.documents || [],
+      documents: response.data.documents || [],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 문서 목록 조회 실패:', error);
+    const errorMessage = error.response?.data?.detail || error.message || '알 수 없는 오류가 발생했습니다.';
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+      error: errorMessage,
     };
   }
 }
@@ -95,29 +84,25 @@ export async function getFoldersFromBackend(
   userId: string = '00000000-0000-0000-0000-000000000001'  // UUID 형식
 ): Promise<{ success: boolean; folders?: any[]; error?: string }> {
   try {
-    const url = `${API_BASE_URL}/api/documents/folders?user_id=${userId}`;
-    console.log('🌐 API 요청:', { method: 'GET', url, userId });
+    console.log('🌐 API 요청:', { method: 'GET', url: '/api/documents/folders', userId });
     
-    const response = await fetch(url);
+    const response = await client.get('/api/documents/folders', {
+      params: { user_id: userId },
+    });
+    
     console.log('🌐 API 응답 상태:', response.status, response.statusText);
+    console.log('🌐 API 응답 데이터:', response.data);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: '조회 실패' }));
-      console.error('❌ API 에러 응답:', errorData);
-      throw new Error(errorData.detail || '폴더 목록 조회에 실패했습니다.');
-    }
-
-    const data = await response.json();
-    console.log('🌐 API 응답 데이터:', data);
     return {
       success: true,
-      folders: data.folders || [],
+      folders: response.data.folders || [],
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ 폴더 목록 조회 실패:', error);
+    const errorMessage = error.response?.data?.detail || error.message || '알 수 없는 오류가 발생했습니다.';
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.',
+      error: errorMessage,
     };
   }
 }

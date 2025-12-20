@@ -23,14 +23,21 @@ npm install
 yarn install
 ```
 
-### 2. 환경 변수 설정 (필요한 경우)
+### 2. 환경 변수 설정
 
-프로젝트에서 환경 변수가 필요한 경우 `.env.local` 파일을 생성하고 필요한 변수를 설정합니다:
+프로젝트 루트 디렉토리에 `.env.local` 파일을 생성하고 다음 변수를 설정합니다:
 
 ```bash
-# .env.local 예시
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# .env.local
+# 백엔드 API 서버 주소
+NEXT_PUBLIC_APP_IP=http://127.0.0.1:8000
 ```
+
+**참고:**
+- Next.js는 `.env.local` 파일을 자동으로 인식합니다
+- 클라이언트 사이드에서 사용하려면 `NEXT_PUBLIC_` 접두사가 필요합니다
+- `.env.local` 파일이 없으면 기본값(`http://127.0.0.1:8000`)이 사용됩니다
+- `.env.local` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다
 
 ## 프로젝트 실행
 
