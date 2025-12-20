@@ -68,8 +68,7 @@ export function SvgIcon({
         );
         setSvgContent(processedSvg);
       })
-      .catch((err) => {
-        console.error(`Failed to load icon: ${name}`, err);
+      .catch(() => {
         // 에러 발생 시 빈 문자열로 설정하여 로딩 상태 유지
         setSvgContent('');
       });

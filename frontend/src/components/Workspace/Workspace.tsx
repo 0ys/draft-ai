@@ -35,7 +35,6 @@ export function Workspace({ folders, selectedFolderId, onGenerate }: WorkspacePr
       const result = await onGenerate(question, searchFolderId);
       setDraftResult(result);
     } catch (error) {
-      console.error('초안 생성 실패:', error);
       alert('초안 생성에 실패했습니다.');
     } finally {
       setIsGenerating(false);

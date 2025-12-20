@@ -17,17 +17,12 @@ export async function uploadDocumentToBackend(
       formData.append('folder_id', folderId);
     }
 
-    console.log('🌐 API 요청:', { method: 'POST', url: '/api/documents/upload', userId, folderId, fileName: file.name, fileSize: file.size });
-
     const response = await client.post('/api/documents/upload', formData, {
       params: { user_id: userId },
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-
-    console.log('🌐 API 응답 상태:', response.status, response.statusText);
-    console.log('🌐 API 응답 데이터:', response.data);
 
     return {
       success: true,
@@ -58,10 +53,7 @@ export async function getDocumentsFromBackend(
       params.folder_id = folderId;
     }
 
-    console.log('🌐 API 요청:', { method: 'GET', url: '/api/documents/list', userId, folderId });
     const response = await client.get('/api/documents/list', { params });
-    console.log('🌐 API 응답 상태:', response.status, response.statusText);
-    console.log('🌐 API 응답 데이터:', response.data);
 
     return {
       success: true,
@@ -84,14 +76,9 @@ export async function getFoldersFromBackend(
   userId: string = '00000000-0000-0000-0000-000000000001'  // UUID 형식
 ): Promise<{ success: boolean; folders?: any[]; error?: string }> {
   try {
-    console.log('🌐 API 요청:', { method: 'GET', url: '/api/documents/folders', userId });
-    
     const response = await client.get('/api/documents/folders', {
       params: { user_id: userId },
     });
-    
-    console.log('🌐 API 응답 상태:', response.status, response.statusText);
-    console.log('🌐 API 응답 데이터:', response.data);
 
     return {
       success: true,
