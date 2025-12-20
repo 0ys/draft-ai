@@ -13,6 +13,7 @@ export function Dashboard() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [isEvidencePanelOpen, setIsEvidencePanelOpen] = useState(true);
 
   useEffect(() => {
     loadFolders();
@@ -114,8 +115,18 @@ export function Dashboard() {
         />
       </CenterColumn>
 
-      <RightColumn>
-        <EvidencePanel evidences={draftResult?.evidences || []} />
+      <RightColumn $isOpen={isEvidencePanelOpen}>
+        {isEvidencePanelOpen ? (
+          <EvidencePanel 
+            evidences={draftResult?.evidences || []} 
+            onClose={() => setIsEvidencePanelOpen(false)}
+          />
+        ) : (
+          <ToggleButton onClick={() => setIsEvidencePanelOpen(true)}>
+            <ToggleIcon>📚</ToggleIcon>
+            <ToggleText>참고 문헌</ToggleText>
+          </ToggleButton>
+        )}
       </RightColumn>
     </Wrapper>
   );
@@ -138,8 +149,43 @@ const CenterColumn = styled.div`
   min-width: 0;
 `;
 
-const RightColumn = styled.div`
-  width: 28rem;
+const RightColumn = styled.div<{ $isOpen: boolean }>`
+  width: ${({ $isOpen }) => ($isOpen ? '28rem' : '3rem')};
   flex-shrink: 0;
+  position: relative;
+  transition: width 0.3s ease;
+`;
+
+const ToggleButton = styled.button`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: ${({ theme }) => theme.colors.White};
+  border: none;
+  border-left: 1px solid ${({ theme }) => theme.colors.Slate200};
+  cursor: pointer;
+  transition: background-color 0.2s;
+  padding: 1rem 0;
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.Slate50};
+  }
+`;
+
+const ToggleIcon = styled.span`
+  font-size: 1.5rem;
+  line-height: 1;
+`;
+
+const ToggleText = styled.span`
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  ${({ theme }) => theme.fonts.Body2};
+  color: ${({ theme }) => theme.colors.Slate700};
+  font-weight: 500;
 `;
 
