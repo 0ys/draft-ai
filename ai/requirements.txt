@@ -5,3 +5,4 @@ pydantic-settings
 python-multipart
 supabase
 postgrest
+urllib3<2.0
