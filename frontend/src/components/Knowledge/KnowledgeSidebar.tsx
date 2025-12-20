@@ -2,7 +2,6 @@
 
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
-import { useState } from 'react';
 import { Folder } from '@/types';
 import { FolderTree } from '@/components/Knowledge/FolderTree';
 import { FileUploadButton } from '@/components/Knowledge/FileUploadButton';
@@ -11,30 +10,23 @@ import { SvgIcon } from '@/components/icons';
 type KnowledgeSidebarProps = {
   folders: Folder[];
   selectedFolderId: string | null;
+  expandedFolders: Set<string>;
   onFolderSelect: (id: string | null) => void;
   onDocumentUpload: (file: File, folderId: string | null) => Promise<void>;
   onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
+  onToggleFolder: (id: string) => void;
 };
 
 export function KnowledgeSidebar({
   folders,
   selectedFolderId,
+  expandedFolders,
   onFolderSelect,
   onDocumentUpload,
   onLoadDocuments,
+  onToggleFolder,
 }: KnowledgeSidebarProps) {
   const theme = useTheme();
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-
-  const toggleFolder = (id: string) => {
-    const newExpanded = new Set(expandedFolders);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedFolders(newExpanded);
-  };
 
   return (
     <Wrapper>
@@ -66,7 +58,7 @@ export function KnowledgeSidebar({
             selectedFolderId={selectedFolderId}
             expandedFolders={expandedFolders}
             onFolderSelect={onFolderSelect}
-            onToggleFolder={toggleFolder}
+            onToggleFolder={onToggleFolder}
             onLoadDocuments={onLoadDocuments}
           />
         </TreeContainer>

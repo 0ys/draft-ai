@@ -12,6 +12,7 @@ export function Dashboard() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadFolders();
@@ -20,6 +21,24 @@ export function Dashboard() {
   const loadFolders = async () => {
     const folderList = await getFolders();
     setFolders(folderList);
+    
+    // 열려있던 폴더의 문서를 다시 로드
+    if (expandedFolders.size > 0) {
+      const foldersToLoad = Array.from(expandedFolders).filter(id => 
+        folderList.some(f => f.id === id)
+      );
+      
+      for (const folderId of foldersToLoad) {
+        const documents = await getDocuments(folderId);
+        setFolders(prevFolders => 
+          prevFolders.map(f => 
+            f.id === folderId 
+              ? { ...f, documents }
+              : f
+          )
+        );
+      }
+    }
   };
 
   const handleFolderSelect = async (folderId: string | null) => {
@@ -71,9 +90,19 @@ export function Dashboard() {
         <KnowledgeSidebar
           folders={folders}
           selectedFolderId={selectedFolderId}
+          expandedFolders={expandedFolders}
           onFolderSelect={handleFolderSelect}
           onDocumentUpload={handleDocumentUpload}
           onLoadDocuments={handleLoadDocuments}
+          onToggleFolder={(id: string) => {
+            const newExpanded = new Set(expandedFolders);
+            if (newExpanded.has(id)) {
+              newExpanded.delete(id);
+            } else {
+              newExpanded.add(id);
+            }
+            setExpandedFolders(newExpanded);
+          }}
         />
       </LeftColumn>
 
