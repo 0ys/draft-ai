@@ -4,7 +4,8 @@ import { Document, Folder, DraftResult } from '@/types';
 import { 
   uploadDocumentToBackend, 
   getDocumentsFromBackend, 
-  getFoldersFromBackend 
+  getFoldersFromBackend,
+  deleteDocumentFromBackend
 } from '@/apis';
 
 // 우선 하드코딩, 나중에 인증에서 가져올 예정
@@ -103,6 +104,35 @@ export async function getDocuments(folderId?: string): Promise<Document[]> {
   } catch (error) {
     console.error('❌ 문서 목록 조회 실패:', error);
     return [];
+  }
+}
+
+/**
+ * 문서 삭제
+ * 백엔드 API를 통해 문서를 삭제합니다 (소프트 딜리트).
+ */
+export async function deleteDocument(
+  documentId: string  // UUID 형식
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await deleteDocumentFromBackend(documentId, DEFAULT_USER_ID);
+    
+    if (!result.success) {
+      return { 
+        success: false, 
+        error: result.error || '문서 삭제에 실패했습니다.' 
+      };
+    }
+
+    return { 
+      success: true
+    };
+  } catch (error) {
+    console.error('문서 삭제 실패:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '문서 삭제에 실패했습니다.' 
+    };
   }
 }
 
