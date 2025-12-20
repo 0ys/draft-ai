@@ -19,8 +19,12 @@ export async function uploadDocument(
   folderId: string | null  // UUID 형식, NULL 가능
 ): Promise<{ success: boolean; documentId?: string; error?: string }> {
   try {
+    // 루트 폴더 ID인 경우 folderId를 undefined로 처리 (folder_id가 NULL로 저장됨)
+    const ROOT_FOLDER_ID = '00000000-0000-0000-0000-000000000000';
+    const actualFolderId = folderId === ROOT_FOLDER_ID ? undefined : (folderId || undefined);
+    
     // 백엔드로 파일 업로드
-    const uploadResult = await uploadDocumentToBackend(file, folderId || undefined, DEFAULT_USER_ID);
+    const uploadResult = await uploadDocumentToBackend(file, actualFolderId, DEFAULT_USER_ID);
     
     if (!uploadResult.success) {
       return { 
@@ -79,8 +83,12 @@ export async function getFolders(): Promise<Folder[]> {
  */
 export async function getDocuments(folderId?: string): Promise<Document[]> {
   try {
-    console.log('🔍 백엔드 API 호출: getDocumentsFromBackend', { userId: DEFAULT_USER_ID, folderId });
-    const result = await getDocumentsFromBackend(DEFAULT_USER_ID, folderId);
+    // 루트 폴더 ID인 경우 folderId를 undefined로 처리 (folder_id가 NULL인 문서 조회)
+    const ROOT_FOLDER_ID = '00000000-0000-0000-0000-000000000000';
+    const actualFolderId = folderId === ROOT_FOLDER_ID ? undefined : folderId;
+    
+    console.log('🔍 백엔드 API 호출: getDocumentsFromBackend', { userId: DEFAULT_USER_ID, folderId, actualFolderId });
+    const result = await getDocumentsFromBackend(DEFAULT_USER_ID, actualFolderId);
     console.log('🔍 백엔드 API 응답:', result);
     
     if (!result.success) {
@@ -93,7 +101,7 @@ export async function getDocuments(folderId?: string): Promise<Document[]> {
       id: doc.id,
       fileName: doc.original_filename,
       folderId: doc.folder_id || null,
-      status: doc.status === 'completed' ? 'completed' : 'processing',
+      status: doc.status === 'completed' ? 'completed' : (doc.status === 'failed' ? 'error' : 'processing') as 'processing' | 'completed' | 'error',
       uploadedAt: new Date(doc.created_at),
     }));
     console.log('✅ 변환된 문서 목록:', documents);

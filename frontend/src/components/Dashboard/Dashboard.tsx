@@ -14,12 +14,6 @@ export function Dashboard() {
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
 
   useEffect(() => {
-    // 현재 로그인 유저 정보 출력
-    const currentUserId = '00000000-0000-0000-0000-000000000001'; // 하드코딩된 유저 ID
-    console.log('=== 현재 로그인 유저 정보 ===');
-    console.log('User ID:', currentUserId);
-    console.log('==========================');
-    
     loadFolders();
   }, []);
 
@@ -51,8 +45,18 @@ export function Dashboard() {
   };
 
   const handleDocumentUpload = async (file: File, folderId: string | null) => {
-    console.log('📤 문서 업로드 시작...', { fileName: file.name, folderId });
-    const result = await uploadDocument(file, folderId);
+    // folderId가 null이면 '최근 문서함' 폴더를 찾아서 사용
+    let targetFolderId = folderId;
+    if (!targetFolderId) {
+      const recentFolder = folders.find(folder => folder.name === '최근 문서함');
+      if (recentFolder) {
+        targetFolderId = recentFolder.id;
+        console.log('📁 기본 폴더 사용: 최근 문서함', { folderId: targetFolderId });
+      }
+    }
+    
+    console.log('📤 문서 업로드 시작...', { fileName: file.name, folderId, targetFolderId });
+    const result = await uploadDocument(file, targetFolderId);
     console.log('📤 문서 업로드 결과:', result);
     if (result.success) {
       console.log('✅ 업로드 성공, 폴더 목록 새로고침...');

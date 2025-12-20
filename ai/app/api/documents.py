@@ -173,10 +173,35 @@ async def list_folders(
 ):
     """
     사용자의 폴더 목록을 조회합니다.
+    '최근 문서함' 폴더가 없으면 자동으로 생성합니다.
     
     - **user_id**: 사용자 ID (UUID)
     """
     try:
+        # '최근 문서함' 폴더가 있는지 확인
+        recent_folder_result = (
+            db.table("folders")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("name", "최근 문서함")
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        
+        # '최근 문서함' 폴더가 없으면 생성
+        if not recent_folder_result.data or len(recent_folder_result.data) == 0:
+            new_folder = {
+                "user_id": user_id,
+                "name": "최근 문서함",
+                "parent_id": None,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
+            }
+            create_result = db.table("folders").insert(new_folder).execute()
+            recent_folder_id = create_result.data[0]["id"] if create_result.data else None
+        else:
+            recent_folder_id = recent_folder_result.data[0]["id"]
+        
         # folders 테이블에서 사용자의 폴더 조회
         result = (
             db.table("folders")
@@ -205,6 +230,45 @@ async def list_folders(
                 "document_count": count_result.count if hasattr(count_result, "count") else len(count_result.data),
                 "created_at": folder["created_at"],
             })
+        
+        # folder_id가 NULL인 문서들을 '최근 문서함'으로 이동 (기존 루트 폴더 문서들)
+        root_docs_result = (
+            db.table("documents")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .is_("folder_id", "null")
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        root_doc_count = root_docs_result.count if hasattr(root_docs_result, "count") else len(root_docs_result.data)
+        
+        # folder_id가 NULL인 문서들을 '최근 문서함'으로 이동
+        if root_doc_count > 0 and recent_folder_id:
+            try:
+                db.table("documents").update({
+                    "folder_id": recent_folder_id,
+                    "updated_at": datetime.now().isoformat(),
+                }).eq("user_id", user_id).is_("folder_id", "null").is_("deleted_at", "null").execute()
+                
+                # '최근 문서함' 폴더의 문서 개수 업데이트
+                for folder in folder_list:
+                    if folder["id"] == recent_folder_id:
+                        folder["document_count"] += root_doc_count
+                        break
+            except Exception as e:
+                print(f"문서 이동 실패 (무시 가능): {e}")
+        
+        # '최근 문서함' 폴더를 맨 앞으로 이동
+        recent_folder = None
+        other_folders = []
+        for folder in folder_list:
+            if folder["id"] == recent_folder_id:
+                recent_folder = folder
+            else:
+                other_folders.append(folder)
+        
+        if recent_folder:
+            folder_list = [recent_folder] + other_folders
         
         return {
             "success": True,

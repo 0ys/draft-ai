@@ -91,5 +91,5 @@ export function parseQAPairs(text: string, fileName: string, folderPath: string)
  */
 export function getFolderName(path: string): string {
   const parts = path.split('/').filter(p => p);
-  return parts[parts.length - 1] || '루트';
+  return parts[parts.length - 1] || 'root';
 }
