@@ -35,7 +35,7 @@ export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
       </Section>
 
       <Footer>
-        <FooterText>📄 {evidence.source.folderPath}</FooterText>
+        <FooterText>📄 {evidence.source.fileName}</FooterText>
       </Footer>
     </Card>
   );

@@ -17,16 +17,16 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    folder_path: Optional[str] = None,
-    user_id: int = 1,  # 우선 하드코딩, 나중에 인증에서 가져올 예정
+    folder_id: Optional[str] = None,  # UUID 형식
+    user_id: str = "00000000-0000-0000-0000-000000000001",  # UUID 형식으로 변경
     db: Client = Depends(get_db),
 ):
     """
     문서 파일을 업로드합니다.
     
     - **file**: 업로드할 파일 (PDF, DOCX, DOC)
-    - **folder_path**: 문서를 저장할 폴더 경로 (선택사항)
-    - **user_id**: 사용자 ID (우선 하드코딩)
+    - **folder_id**: 문서를 저장할 폴더 ID (UUID, 선택사항)
+    - **user_id**: 사용자 ID (UUID 형식)
     """
     # 파일 크기 제한: 50MB
     MAX_FILE_SIZE = 50 * 1024 * 1024
@@ -64,10 +64,8 @@ async def upload_document(
     file_extension = original_filename.split(".")[-1] if "." in original_filename else ""
     safe_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}.{file_extension}"
     
-    # 폴더 경로에 따라 하위 디렉토리 생성
-    target_folder_path = folder_path or "root/2025"
-    folder_path_parts = target_folder_path.split("/")
-    save_dir = UPLOAD_DIR / "/".join(folder_path_parts)
+    # 파일 저장 디렉토리 (user_id별로 분리)
+    save_dir = UPLOAD_DIR / user_id
     save_dir.mkdir(parents=True, exist_ok=True)
     
     # 파일 저장
@@ -96,7 +94,7 @@ async def upload_document(
     try:
         document_data = {
             "user_id": user_id,
-            "folder_path": target_folder_path,
+            "folder_id": folder_id,  # folder_id 사용 (NULL 가능)
             "original_filename": original_filename,
             "saved_filename": safe_filename,
             "file_path": relative_path,
@@ -122,7 +120,7 @@ async def upload_document(
         "saved_filename": safe_filename,
         "content_type": file.content_type,
         "size": len(contents),
-        "folder_path": target_folder_path,
+        "folder_id": folder_id,
         "file_path": relative_path,
         "absolute_path": absolute_path,
         "message": "파일이 성공적으로 업로드되었습니다.",
@@ -131,22 +129,25 @@ async def upload_document(
 
 @router.get("/list")
 async def list_documents(
-    user_id: int = 1,  # 우선 하드코딩, 나중에 인증에서 가져올 예정
-    folder_path: Optional[str] = None,
+    user_id: str = "00000000-0000-0000-0000-000000000001",  # UUID 형식
+    folder_id: Optional[str] = None,  # UUID 형식
     db: Client = Depends(get_db),
 ):
     """
     사용자의 문서 목록을 조회합니다.
     
-    - **user_id**: 사용자 ID
-    - **folder_path**: 특정 폴더 경로로 필터링 (선택사항)
+    - **user_id**: 사용자 ID (UUID)
+    - **folder_id**: 특정 폴더 ID로 필터링 (선택사항, UUID)
     """
     try:
         query = db.table("documents").select("*").eq("user_id", user_id)
         
-        # 폴더 경로 필터링
-        if folder_path:
-            query = query.eq("folder_path", folder_path)
+        # 소프트 딜리트 필터링
+        query = query.is_("deleted_at", "null")
+        
+        # 폴더 ID 필터링
+        if folder_id:
+            query = query.eq("folder_id", folder_id)
         
         # 생성일 기준 내림차순 정렬
         query = query.order("created_at", desc=True)
@@ -167,39 +168,43 @@ async def list_documents(
 
 @router.get("/folders")
 async def list_folders(
-    user_id: int = 1,  # 우선 하드코딩, 나중에 인증에서 가져올 예정
+    user_id: str = "00000000-0000-0000-0000-000000000001",  # UUID 형식
     db: Client = Depends(get_db),
 ):
     """
     사용자의 폴더 목록을 조회합니다.
     
-    - **user_id**: 사용자 ID
+    - **user_id**: 사용자 ID (UUID)
     """
     try:
-        # 사용자의 모든 문서에서 고유한 folder_path 추출
-        result = db.table("documents").select("folder_path").eq("user_id", user_id).execute()
+        # folders 테이블에서 사용자의 폴더 조회
+        result = (
+            db.table("folders")
+            .select("*")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .order("created_at", desc=False)
+            .execute()
+        )
         
-        # 중복 제거
-        folders = list(set([doc["folder_path"] for doc in result.data if doc.get("folder_path")]))
-        
-        # 폴더별 문서 개수 계산
+        # 각 폴더별 문서 개수 계산
         folder_list = []
-        for folder_path in folders:
+        for folder in result.data:
             count_result = (
                 db.table("documents")
                 .select("id", count="exact")
                 .eq("user_id", user_id)
-                .eq("folder_path", folder_path)
+                .eq("folder_id", folder["id"])
+                .is_("deleted_at", "null")
                 .execute()
             )
             folder_list.append({
-                "path": folder_path,
-                "name": folder_path.split("/")[-1] if "/" in folder_path else folder_path,
+                "id": folder["id"],
+                "name": folder["name"],
+                "parent_id": folder.get("parent_id"),
                 "document_count": count_result.count if hasattr(count_result, "count") else len(count_result.data),
+                "created_at": folder["created_at"],
             })
-        
-        # 경로 기준 정렬
-        folder_list.sort(key=lambda x: x["path"])
         
         return {
             "success": True,

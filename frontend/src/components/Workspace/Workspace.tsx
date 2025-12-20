@@ -10,19 +10,19 @@ import { DraftEditor } from './DraftEditor';
 
 type WorkspaceProps = {
   folders: Folder[];
-  selectedFolderPath: string | null;
-  onGenerate: (question: string, folderPath: string | null) => Promise<DraftResult>;
+  selectedFolderId: string | null;
+  onGenerate: (question: string, folderId: string | null) => Promise<DraftResult>;
 };
 
-export function Workspace({ folders, selectedFolderPath, onGenerate }: WorkspaceProps) {
+export function Workspace({ folders, selectedFolderId, onGenerate }: WorkspaceProps) {
   const [question, setQuestion] = useState('');
-  const [searchFolderPath, setSearchFolderPath] = useState<string | null>(selectedFolderPath);
+  const [searchFolderId, setSearchFolderId] = useState<string | null>(selectedFolderId);
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    setSearchFolderPath(selectedFolderPath);
-  }, [selectedFolderPath]);
+    setSearchFolderId(selectedFolderId);
+  }, [selectedFolderId]);
 
   const handleGenerate = async () => {
     if (!question.trim()) {
@@ -32,7 +32,7 @@ export function Workspace({ folders, selectedFolderPath, onGenerate }: Workspace
 
     setIsGenerating(true);
     try {
-      const result = await onGenerate(question, searchFolderPath);
+      const result = await onGenerate(question, searchFolderId);
       setDraftResult(result);
     } catch (error) {
       console.error('초안 생성 실패:', error);
@@ -59,8 +59,8 @@ export function Workspace({ folders, selectedFolderPath, onGenerate }: Workspace
             <Label>참조할 폴더</Label>
             <FolderSelect
               folders={folders}
-              selectedPath={searchFolderPath}
-              onSelect={setSearchFolderPath}
+              selectedId={searchFolderId}
+              onSelect={setSearchFolderId}
             />
           </FormGroup>
           <GenerateButton
