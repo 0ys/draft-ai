@@ -52,9 +52,7 @@ export async function uploadDocument(
  */
 export async function getFolders(): Promise<Folder[]> {
   try {
-    console.log('🔍 백엔드 API 호출: getFoldersFromBackend', { userId: DEFAULT_USER_ID });
     const result = await getFoldersFromBackend(DEFAULT_USER_ID);
-    console.log('🔍 백엔드 API 응답:', result);
     
     if (!result.success) {
       console.error('❌ 폴더 목록 조회 실패:', result.error);
@@ -69,7 +67,6 @@ export async function getFolders(): Promise<Folder[]> {
       documentCount: folder.document_count || 0,
       documents: [], // 문서는 별도로 조회
     }));
-    console.log('✅ 변환된 폴더 목록:', folders);
     return folders;
   } catch (error) {
     console.error('❌ 폴더 목록 조회 실패:', error);
@@ -87,9 +84,7 @@ export async function getDocuments(folderId?: string): Promise<Document[]> {
     const ROOT_FOLDER_ID = '00000000-0000-0000-0000-000000000000';
     const actualFolderId = folderId === ROOT_FOLDER_ID ? undefined : folderId;
     
-    console.log('🔍 백엔드 API 호출: getDocumentsFromBackend', { userId: DEFAULT_USER_ID, folderId, actualFolderId });
     const result = await getDocumentsFromBackend(DEFAULT_USER_ID, actualFolderId);
-    console.log('🔍 백엔드 API 응답:', result);
     
     if (!result.success) {
       console.error('❌ 문서 목록 조회 실패:', result.error);
@@ -104,7 +99,6 @@ export async function getDocuments(folderId?: string): Promise<Document[]> {
       status: doc.status === 'completed' ? 'completed' : (doc.status === 'failed' ? 'error' : 'processing') as 'processing' | 'completed' | 'error',
       uploadedAt: new Date(doc.created_at),
     }));
-    console.log('✅ 변환된 문서 목록:', documents);
     return documents;
   } catch (error) {
     console.error('❌ 문서 목록 조회 실패:', error);

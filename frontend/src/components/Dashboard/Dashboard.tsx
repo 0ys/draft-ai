@@ -18,10 +18,7 @@ export function Dashboard() {
   }, []);
 
   const loadFolders = async () => {
-    console.log('📁 폴더 목록 로드 시작...');
     const folderList = await getFolders();
-    console.log('📁 폴더 목록 로드 완료:', folderList);
-    console.log('📁 폴더 개수:', folderList.length);
     setFolders(folderList);
   };
 
@@ -31,10 +28,7 @@ export function Dashboard() {
 
   const handleLoadDocuments = async (folderId: string) => {
     // 폴더 확장 시 해당 폴더의 문서를 불러와서 폴더 객체에 추가
-    console.log('📄 문서 목록 로드 시작...', { folderId });
     const documents = await getDocuments(folderId);
-    console.log('📄 문서 목록 로드 완료:', documents);
-    console.log('📄 문서 개수:', documents.length);
     setFolders(prevFolders => 
       prevFolders.map(folder => 
         folder.id === folderId 
@@ -51,18 +45,13 @@ export function Dashboard() {
       const recentFolder = folders.find(folder => folder.name === '최근 문서함');
       if (recentFolder) {
         targetFolderId = recentFolder.id;
-        console.log('📁 기본 폴더 사용: 최근 문서함', { folderId: targetFolderId });
       }
     }
     
-    console.log('📤 문서 업로드 시작...', { fileName: file.name, folderId, targetFolderId });
     const result = await uploadDocument(file, targetFolderId);
-    console.log('📤 문서 업로드 결과:', result);
     if (result.success) {
-      console.log('✅ 업로드 성공, 폴더 목록 새로고침...');
       await loadFolders();
     } else {
-      console.error('❌ 업로드 실패:', result.error);
       throw new Error(result.error || '업로드 실패');
     }
   };

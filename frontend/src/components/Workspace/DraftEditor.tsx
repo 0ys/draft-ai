@@ -17,7 +17,6 @@ export function DraftEditor({ draft, onDraftChange }: DraftEditorProps) {
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      console.error('복사 실패:', error);
       alert('복사에 실패했습니다.');
     }
   };
