@@ -9,7 +9,6 @@ export type QAChunk = {
     page?: number;
     folderPath: string;
   };
-  embedding?: number[]; // 벡터 임베딩 (실제로는 서버에서 관리)
 };
 
 export type DraftResult = {
@@ -23,7 +22,7 @@ export type Document = {
   folderPath: string;
   status: 'processing' | 'completed' | 'error';
   uploadedAt: Date;
-  qaChunks: QAChunk[];
+  // qaChunks는 RAG 파이프라인 구현 시 추가 예정
 };
 
 export type Folder = {
