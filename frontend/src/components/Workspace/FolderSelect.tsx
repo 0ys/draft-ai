@@ -6,20 +6,20 @@ import { getFolderName } from '@/utils';
 
 type FolderSelectProps = {
   folders: Folder[];
-  selectedPath: string | null;
-  onSelect: (path: string | null) => void;
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
 };
 
-export function FolderSelect({ folders, selectedPath, onSelect }: FolderSelectProps) {
+export function FolderSelect({ folders, selectedId, onSelect }: FolderSelectProps) {
   return (
     <Select
-      value={selectedPath || 'all'}
+      value={selectedId || 'all'}
       onChange={(e) => onSelect(e.target.value === 'all' ? null : e.target.value)}
     >
       <option value="all">전체 폴더</option>
       {folders.map((folder) => (
-        <option key={folder.path} value={folder.path}>
-          {getFolderName(folder.path)}
+        <option key={folder.id} value={folder.id}>
+          {folder.name}
         </option>
       ))}
     </Select>

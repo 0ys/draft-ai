@@ -10,26 +10,28 @@ import { SvgIcon } from '@/components/icons';
 
 type KnowledgeSidebarProps = {
   folders: Folder[];
-  selectedFolderPath: string | null;
-  onFolderSelect: (path: string | null) => void;
-  onDocumentUpload: (file: File, folderPath: string) => Promise<void>;
+  selectedFolderId: string | null;
+  onFolderSelect: (id: string | null) => void;
+  onDocumentUpload: (file: File, folderId: string | null) => Promise<void>;
+  onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
 };
 
 export function KnowledgeSidebar({
   folders,
-  selectedFolderPath,
+  selectedFolderId,
   onFolderSelect,
   onDocumentUpload,
+  onLoadDocuments,
 }: KnowledgeSidebarProps) {
   const theme = useTheme();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
-  const toggleFolder = (path: string) => {
+  const toggleFolder = (id: string) => {
     const newExpanded = new Set(expandedFolders);
-    if (newExpanded.has(path)) {
-      newExpanded.delete(path);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
     } else {
-      newExpanded.add(path);
+      newExpanded.add(id);
     }
     setExpandedFolders(newExpanded);
   };
@@ -50,8 +52,7 @@ export function KnowledgeSidebar({
       <UploadSection>
         <FileUploadButton
           onUpload={(file) => {
-            const folderPath = selectedFolderPath || 'root/2025';
-            return onDocumentUpload(file, folderPath);
+            return onDocumentUpload(file, selectedFolderId);
           }}
         />
       </UploadSection>
@@ -62,10 +63,11 @@ export function KnowledgeSidebar({
         <TreeContainer>
           <FolderTree
             folders={folders}
-            selectedFolderPath={selectedFolderPath}
+            selectedFolderId={selectedFolderId}
             expandedFolders={expandedFolders}
             onFolderSelect={onFolderSelect}
             onToggleFolder={toggleFolder}
+            onLoadDocuments={onLoadDocuments}
           />
         </TreeContainer>
       </NavArea>

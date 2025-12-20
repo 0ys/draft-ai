@@ -7,10 +7,11 @@ import { SvgIcon } from '@/components/icons';
 
 type FolderTreeProps = {
   folders: Folder[];
-  selectedFolderPath: string | null;
+  selectedFolderId: string | null;
   expandedFolders: Set<string>;
-  onFolderSelect: (path: string | null) => void;
-  onToggleFolder: (path: string) => void;
+  onFolderSelect: (id: string | null) => void;
+  onToggleFolder: (id: string) => void;
+  onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
 };
 
 function getDocumentIcon(fileName: string): { name: string; color: string } {
@@ -27,31 +28,42 @@ function getDocumentIcon(fileName: string): { name: string; color: string } {
 
 export function FolderTree({
   folders,
-  selectedFolderPath,
+  selectedFolderId,
   expandedFolders,
   onFolderSelect,
   onToggleFolder,
+  onLoadDocuments,
 }: FolderTreeProps) {
+  // 계층 구조를 위한 정렬 (parentId가 null인 것부터, 그 다음 자식들)
   const sortedFolders = [...folders].sort((a, b) => {
-    const depthA = a.path.split('/').filter(p => p).length;
-    const depthB = b.path.split('/').filter(p => p).length;
-    if (depthA !== depthB) return depthA - depthB;
-    return a.path.localeCompare(b.path);
+    // 루트 폴더(parentId가 null)를 먼저
+    if (a.parentId === null && b.parentId !== null) return -1;
+    if (a.parentId !== null && b.parentId === null) return 1;
+    // 같은 레벨이면 이름으로 정렬
+    return a.name.localeCompare(b.name);
   });
+
+  const handleFolderClick = async (folder: Folder) => {
+    const wasExpanded = expandedFolders.has(folder.id);
+    onToggleFolder(folder.id);
+    onFolderSelect(folder.id);
+    
+    // 폴더를 확장할 때 문서가 없으면 로드
+    if (!wasExpanded && folder.documents.length === 0 && onLoadDocuments) {
+      await onLoadDocuments(folder.id);
+    }
+  };
 
   return (
     <Wrapper>
       {sortedFolders.map((folder) => {
-        const isExpanded = expandedFolders.has(folder.path);
-        const isSelected = selectedFolderPath === folder.path;
+        const isExpanded = expandedFolders.has(folder.id);
+        const isSelected = selectedFolderId === folder.id;
 
         return (
-          <FolderItem key={folder.path}>
+          <FolderItem key={folder.id}>
             <FolderButton
-              onClick={() => {
-                onToggleFolder(folder.path);
-                onFolderSelect(folder.path);
-              }}
+              onClick={() => handleFolderClick(folder)}
               $isSelected={isSelected}
             >
               <IconWrapper>
@@ -60,8 +72,8 @@ export function FolderTree({
                   size={25} 
                 />
               </IconWrapper>
-              <FolderName>{getFolderName(folder.path)}</FolderName>
-              <FolderCount>({folder.documents.length})</FolderCount>
+              <FolderName>{folder.name}</FolderName>
+              <FolderCount>({folder.documentCount})</FolderCount>
             </FolderButton>
             
             {isExpanded && folder.documents.length > 0 && (

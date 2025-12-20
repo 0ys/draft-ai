@@ -7,7 +7,7 @@ export type QAChunk = {
   source: {
     fileName: string;
     page?: number;
-    folderPath: string;
+    folderId: string | null;  // UUID 형식
   };
 };
 
@@ -19,14 +19,16 @@ export type DraftResult = {
 export type Document = {
   id: string;
   fileName: string;
-  folderPath: string;
+  folderId: string | null;  // UUID 형식, NULL 가능
   status: 'processing' | 'completed' | 'error';
   uploadedAt: Date;
   // qaChunks는 RAG 파이프라인 구현 시 추가 예정
 };
 
 export type Folder = {
-  path: string;
+  id: string;  // UUID 형식
   name: string;
-  documents: Document[];
+  parentId: string | null;  // UUID 형식, NULL이면 루트 폴더
+  documentCount: number;
+  documents: Document[];  // 클라이언트에서 필요시 로드
 };
