@@ -501,6 +501,66 @@ class QnARAGService:
             print(f"PDF 인덱스 제거 실패: {e}")
             return False
 
+    def _validate_question(self, question: str) -> bool:
+        """
+        질문이 정상적인지 검증
+        
+        Args:
+            question: 사용자 질문
+            
+        Returns:
+            정상적인 질문이면 True, 그렇지 않으면 False
+        """
+        if not question or not question.strip():
+            return False
+        
+        # 질문이 너무 짧은 경우 (5자 미만)
+        if len(question.strip()) < 5:
+            return False
+        
+        # 특수문자나 공백만 있는 경우 체크
+        cleaned_question = question.strip()
+        if not cleaned_question or len(cleaned_question.replace(' ', '').replace('?', '').replace('？', '')) < 3:
+            return False
+        
+        # LLM으로 질문이 정상적인지 검증
+        validation_prompt = f"""다음 텍스트가 정상적인 질문인지 판단해주세요.
+정상적인 질문이란 구체적인 정보를 요청하거나, 특정 주제에 대해 물어보는 의미 있는 문장을 의미합니다.
+
+텍스트: "{question}"
+
+다음 JSON 형식으로 응답해주세요:
+{{
+  "is_valid": true 또는 false,
+  "reason": "판단 이유"
+}}"""
+
+        try:
+            response = self.llm.complete(validation_prompt)
+            response_text = str(response).strip()
+            
+            # JSON 추출
+            if "```json" in response_text:
+                response_text = re.search(r'```json\s*(.*?)\s*```', response_text, re.DOTALL)
+                if response_text:
+                    response_text = response_text.group(1)
+            elif "```" in response_text:
+                response_text = re.search(r'```\s*(.*?)\s*```', response_text, re.DOTALL)
+                if response_text:
+                    response_text = response_text.group(1)
+            
+            result = json.loads(response_text)
+            is_valid = result.get("is_valid", False)
+            
+            if not is_valid:
+                print(f"질문 검증 실패: {result.get('reason', '알 수 없는 이유')}")
+            
+            return is_valid
+        except Exception as e:
+            print(f"질문 검증 중 오류 발생: {e}")
+            # 검증 실패 시 기본 규칙으로 판단
+            return len(question.strip()) >= 5
+
     def query_documents(
         self,
         question: str,
@@ -520,6 +580,59 @@ class QnARAGService:
         """
         if not document_ids:
             raise ValueError("검색할 문서가 없습니다.")
+
+        # 질문 검증
+        if not self._validate_question(question):
+            # 정상적이지 않은 질문인 경우 RAG 없이 바로 답변 생성
+            from datetime import datetime
+            current_date = datetime.now().strftime("%Y. %m. %d.")
+            
+            invalid_question_prompt = f"""당신은 공공기관의 민원 담당자입니다. 사용자가 입력한 질문이 정상적이지 않아 문서 검색을 수행하지 않았습니다.
+
+**질문:**
+{question}
+
+**민원 답변서 작성 형식:**
+
+민원 답변서 (초안)
+수신: 민원인 귀하
+일자: {current_date}
+
+안녕하십니까, 서울시정에 깊은 관심을 가져주시는 귀하께 감사드립니다.
+귀하께서 국민신문고를 통해 질의하신 내용에 대해 다음과 같이 답변 드립니다.
+
+info
+질문 확인 요청
+
+귀하께서 입력하신 질문이 명확하지 않거나 구체적이지 않아 정확한 답변을 드리기 어렵습니다.
+
+[상세 답변 내용]
+
+1. 질문 확인이 필요한 사항
+귀하께서 입력하신 질문을 더 구체적으로 작성해 주시면, 관련 문서를 검토하여 정확한 답변을 드릴 수 있습니다.
+
+다음과 같은 정보를 포함하여 질문을 다시 작성해 주시기 바랍니다:
+- 구체적으로 무엇을 알고 싶으신지 명확히 작성해 주세요
+- 관련된 주제나 분야를 구체적으로 명시해 주세요
+- 필요한 정보나 기준, 절차 등이 있다면 함께 작성해 주세요
+
+예시:
+- "주민등록증 재발급 절차는 어떻게 되나요?"
+- "공동주택 층간소음 기준은 무엇인가요?"
+- "건축 허가 신청 방법을 알려주세요."
+
+2. 추가 안내
+더 구체적인 질문을 작성해 주시면, 관련 문서를 검토하여 상세한 답변을 드리겠습니다.
+
+서울시 주택정책과장
+
+담당자: [담당자명] 주무관 ([연락처])
+"""
+            
+            print(f"질문 검증 실패: '{question}' - RAG 없이 답변 생성")
+            response = self.llm.complete(invalid_question_prompt)
+            answer = str(response).strip() if response else ""
+            return answer
 
         # 질문을 임베딩으로 변환
         query_embedding = self.embed_model.get_query_embedding(question)
