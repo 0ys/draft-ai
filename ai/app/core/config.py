@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     
     # LlamaParse 설정
     llama_cloud_api_key: Optional[str] = None
+    
+    # PostgreSQL 연결 설정 (pgvector 사용)
+    # Supabase의 경우 연결 문자열에서 추출
+    postgres_host: Optional[str] = None
+    postgres_port: int = 5432
+    postgres_database: Optional[str] = None
+    postgres_user: Optional[str] = None
+    postgres_password: Optional[str] = None
 
     class Config:
         env_file = ".env"

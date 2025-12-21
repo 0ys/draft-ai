@@ -73,7 +73,7 @@ CREATE TABLE documents (
   file_path TEXT NOT NULL,
   file_size INTEGER NOT NULL,
   content_type TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'processing', -- 'processing', 'completed', 'failed'
+  status document_status NOT NULL DEFAULT 'processing', -- ENUM 타입: 'processing', 'completed', 'failed'
   metadata JSONB DEFAULT '{}', -- PDF 페이지 수, 작성자 등 추가 정보 저장
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -235,6 +235,14 @@ UUID 생성 함수를 사용하기 위해 필요합니다 (일반적으로 기�
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 ```
 
+### 문서 상태 ENUM 타입
+
+문서 처리 상태를 관리하기 위한 ENUM 타입입니다.
+
+```sql
+CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+```
+
 ---
 
 ## 환경 변수 설정
@@ -275,11 +283,51 @@ VALUES (
    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
    ```
 
-2. 테이블 생성 (순서 중요)
+2. ENUM 타입 생성
+   ```sql
+   CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+   ```
+
+3. 테이블 생성 (순서 중요)
    - `users` → `folders` → `documents` → `document_chunks` → `drafts` → `draft_sources`
 
-3. 인덱스 생성
+4. 인덱스 생성
    - 모든 테이블 생성 후 인덱스 생성
+
+## 기존 TEXT 컬럼을 ENUM으로 마이그레이션
+
+기존에 `status` 컬럼이 `TEXT` 타입으로 생성된 경우, 다음 SQL로 ENUM으로 변환할 수 있습니다:
+
+```sql
+-- 1. ENUM 타입 생성 (이미 있으면 스킵)
+CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+
+-- 2. 기존 데이터 검증 (잘못된 값이 있는지 확인)
+SELECT DISTINCT status FROM documents 
+WHERE status NOT IN ('processing', 'completed', 'failed');
+
+-- 3. 임시 컬럼 추가
+ALTER TABLE documents ADD COLUMN status_new document_status;
+
+-- 4. 기존 데이터 변환
+UPDATE documents 
+SET status_new = CASE 
+  WHEN status = 'processing' THEN 'processing'::document_status
+  WHEN status = 'completed' THEN 'completed'::document_status
+  WHEN status = 'failed' THEN 'failed'::document_status
+  ELSE 'processing'::document_status  -- 기본값
+END;
+
+-- 5. 기존 컬럼 삭제 및 새 컬럼 이름 변경
+ALTER TABLE documents DROP COLUMN status;
+ALTER TABLE documents RENAME COLUMN status_new TO status;
+
+-- 6. NOT NULL 제약조건 추가
+ALTER TABLE documents ALTER COLUMN status SET NOT NULL;
+
+-- 7. 기본값 설정
+ALTER TABLE documents ALTER COLUMN status SET DEFAULT 'processing'::document_status;
+```
 
 ---
 

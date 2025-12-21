@@ -1,45 +1,48 @@
 'use client';
 
 import styled from '@emotion/styled';
+import Image from 'next/image';
 import { Document } from '@/types';
 
 type DocumentStatusBadgeProps = {
   status: Document['status'];
+  size?: number;  // 아이콘 크기 (기본값: 16)
 };
 
-export function DocumentStatusBadge({ status }: DocumentStatusBadgeProps) {
+export function DocumentStatusBadge({ status, size = 16 }: DocumentStatusBadgeProps) {
   const statusConfig = {
     processing: {
-      label: '처리 중',
-      bgColor: 'rgba(245, 158, 11, 0.2)',
-      textColor: '#F59E0B',
+      icon: '/icons/check-gray.png',
+      alt: '처리 중',
     },
     completed: {
-      label: '완료',
-      bgColor: 'rgba(16, 185, 129, 0.2)',
-      textColor: '#10B981',
+      icon: '/icons/check-green.png',
+      alt: '완료',
     },
-    error: {
-      label: '오류',
-      bgColor: 'rgba(239, 68, 68, 0.2)',
-      textColor: '#EF4444',
+    failed: {
+      icon: '/icons/alert.png',
+      alt: '오류',
     },
   };
 
   const config = statusConfig[status];
 
   return (
-    <Badge $bgColor={config.bgColor} $textColor={config.textColor}>
-      {config.label}
-    </Badge>
+    <IconWrapper title={config.alt}>
+      <Image
+        src={config.icon}
+        alt={config.alt}
+        width={size}
+        height={size}
+        unoptimized
+      />
+    </IconWrapper>
   );
 }
 
-const Badge = styled.span<{ $bgColor: string; $textColor: string }>`
-  padding: 0.25rem 0.5rem;
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  ${({ theme }) => theme.fonts.Caption};
-  font-weight: 500;
-  background-color: ${({ $bgColor }) => $bgColor};
-  color: ${({ $textColor }) => $textColor};
+const IconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 `;
