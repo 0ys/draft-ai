@@ -15,6 +15,7 @@ export function Dashboard() {
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isEvidencePanelOpen, setIsEvidencePanelOpen] = useState(true);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(true);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -92,25 +93,30 @@ export function Dashboard() {
   }, [folders, checkDocumentStatuses]);
 
   const loadFolders = async () => {
-    const folderList = await getFolders();
-    setFolders(folderList);
-    
-    // 열려있던 폴더의 문서를 다시 로드
-    if (expandedFolders.size > 0) {
-      const foldersToLoad = Array.from(expandedFolders).filter(id => 
-        folderList.some(f => f.id === id)
-      );
+    setIsLoadingFolders(true);
+    try {
+      const folderList = await getFolders();
+      setFolders(folderList);
       
-      for (const folderId of foldersToLoad) {
-        const documents = await getDocuments(folderId);
-        setFolders(prevFolders => 
-          prevFolders.map(f => 
-            f.id === folderId 
-              ? { ...f, documents }
-              : f
-          )
+      // 열려있던 폴더의 문서를 다시 로드
+      if (expandedFolders.size > 0) {
+        const foldersToLoad = Array.from(expandedFolders).filter(id => 
+          folderList.some(f => f.id === id)
         );
+        
+        for (const folderId of foldersToLoad) {
+          const documents = await getDocuments(folderId);
+          setFolders(prevFolders => 
+            prevFolders.map(f => 
+              f.id === folderId 
+                ? { ...f, documents }
+                : f
+            )
+          );
+        }
       }
+    } finally {
+      setIsLoadingFolders(false);
     }
   };
 
@@ -192,6 +198,7 @@ export function Dashboard() {
           onDocumentUpload={handleDocumentUpload}
           onLoadDocuments={handleLoadDocuments}
           onDocumentDelete={handleDocumentDelete}
+          isLoadingFolders={isLoadingFolders}
           onToggleFolder={(id: string) => {
             const newExpanded = new Set(expandedFolders);
             if (newExpanded.has(id)) {

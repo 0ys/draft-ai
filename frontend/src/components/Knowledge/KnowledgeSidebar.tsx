@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Folder } from '@/types';
 import { FolderTree } from '@/components/Knowledge/FolderTree';
 import { FileUploadButton } from '@/components/Knowledge/FileUploadButton';
+import { LoadingSpinner } from '@/components/Loading';
 import { SvgIcon } from '@/components/icons';
 
 type KnowledgeSidebarProps = {
@@ -18,6 +19,7 @@ type KnowledgeSidebarProps = {
   onLoadDocuments?: (folderId: string) => Promise<void>;  // 폴더 확장 시 문서 로드
   onDocumentDelete?: (documentId: string, folderId: string) => Promise<void>;  // 문서 삭제 핸들러
   onToggleFolder: (id: string) => void;
+  isLoadingFolders?: boolean;  // 폴더 목록 로딩 상태
 };
 
 export function KnowledgeSidebar({
@@ -29,6 +31,7 @@ export function KnowledgeSidebar({
   onLoadDocuments,
   onDocumentDelete,
   onToggleFolder,
+  isLoadingFolders = false,
 }: KnowledgeSidebarProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -88,15 +91,21 @@ export function KnowledgeSidebar({
       <NavArea>
         <SectionLabel>KNOWLEDGE BASE</SectionLabel>
         <TreeContainer>
-          <FolderTree
-            folders={folders}
-            selectedFolderId={selectedFolderId}
-            expandedFolders={expandedFolders}
-            onFolderSelect={onFolderSelect}
-            onToggleFolder={onToggleFolder}
-            onLoadDocuments={onLoadDocuments}
-            onDocumentDelete={onDocumentDelete}
-          />
+          {isLoadingFolders ? (
+            <LoadingWrapper>
+              <LoadingSpinner size="md" message="폴더 목록을 불러오는 중..." />
+            </LoadingWrapper>
+          ) : (
+            <FolderTree
+              folders={folders}
+              selectedFolderId={selectedFolderId}
+              expandedFolders={expandedFolders}
+              onFolderSelect={onFolderSelect}
+              onToggleFolder={onToggleFolder}
+              onLoadDocuments={onLoadDocuments}
+              onDocumentDelete={onDocumentDelete}
+            />
+          )}
         </TreeContainer>
       </NavArea>
 
@@ -207,6 +216,7 @@ const TreeContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 0 12px;
+  position: relative;
   
   /* 스크롤바 커스텀 */
   &::-webkit-scrollbar {
@@ -216,6 +226,14 @@ const TreeContainer = styled.div`
     background: ${({ theme }) => theme.colors.Slate200};
     border-radius: 10px;
   }
+`;
+
+const LoadingWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  width: 100%;
 `;
 
 const Footer = styled.div`
