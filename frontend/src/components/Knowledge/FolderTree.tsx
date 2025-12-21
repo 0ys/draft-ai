@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Folder, Document } from '@/types';
 import { getFolderName } from '@/utils';
 import { SvgIcon } from '@/components/icons';
+import { DocumentStatusBadge } from '@/components/Knowledge/DocumentStatusBadge';
 
 type FolderTreeProps = {
   folders: Folder[];
@@ -112,8 +113,11 @@ export function FolderTree({
                       onClick={() => handleDocumentClick(document, folder.id)}
                       $isSelected={isSelected}
                     >
-                      <SvgIcon name={iconName} size={25} color={iconColor} />
+                      <SvgIcon name={iconName} size={20} color={iconColor} />
                       <DocumentName>{document.fileName}</DocumentName>
+                      <StatusIconWrapper>
+                        <DocumentStatusBadge status={document.status} size={16} />
+                      </StatusIconWrapper>
                       {isSelected && (
                         <DeleteButton
                           onClick={(e) => handleDeleteClick(e, document.id, folder.id)}
@@ -231,6 +235,14 @@ const DocumentName = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.875rem;
+`;
+
+const StatusIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
 `;
 
 const DeleteButton = styled.button`

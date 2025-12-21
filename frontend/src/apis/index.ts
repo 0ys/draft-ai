@@ -7,5 +7,7 @@ export {
   getDocumentsFromBackend,
   getFoldersFromBackend,
   deleteDocumentFromBackend,
+  getDocumentStatusFromBackend,
+  queryDocumentsFromBackend
 } from './documents';
 

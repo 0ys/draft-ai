@@ -1,12 +1,12 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { KnowledgeSidebar } from '@/components/Knowledge/KnowledgeSidebar';
 import { Workspace } from '@/components/Workspace/Workspace';
 import { EvidencePanel } from '@/components/Evidence/EvidencePanel';
 import { Folder, DraftResult, Document } from '@/types';
-import { uploadDocument, getFolders, getDocuments, generateDraft, deleteDocument } from '@/app/actions';
+import { uploadDocument, getFolders, getDocuments, generateDraft, deleteDocument, getDocumentStatus } from '@/app/actions';
 
 export function Dashboard() {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -14,10 +14,89 @@ export function Dashboard() {
   const [draftResult, setDraftResult] = useState<DraftResult | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isEvidencePanelOpen, setIsEvidencePanelOpen] = useState(true);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadFolders();
+    
+    // 컴포넌트 언마운트 시 폴링 정리
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
   }, []);
+
+  // 인덱싱 중인 문서들의 상태를 주기적으로 확인하는 함수
+  const checkDocumentStatuses = useCallback(async () => {
+    // 현재 폴더 상태를 기반으로 처리 중인 문서 찾기
+    const processingDocuments: Array<{ documentId: string; folderId: string }> = [];
+    
+    folders.forEach(folder => {
+      folder.documents.forEach(doc => {
+        if (doc.status === 'processing') {
+          processingDocuments.push({
+            documentId: doc.id,
+            folderId: folder.id,
+          });
+        }
+      });
+    });
+
+    // 각 문서의 상태를 확인하고 업데이트
+    for (const { documentId, folderId } of processingDocuments) {
+      const statusResult = await getDocumentStatus(documentId);
+      
+      if (statusResult.success && statusResult.status) {
+        const newStatus = statusResult.status === 'completed' 
+          ? 'completed' 
+          : statusResult.status === 'failed' 
+          ? 'failed' 
+          : 'processing';
+        
+        // 상태가 변경되었으면 문서 목록 업데이트
+        if (newStatus !== 'processing') {
+          // 해당 폴더의 문서 목록 새로고침
+          const documents = await getDocuments(folderId);
+          setFolders(prevFolders => 
+            prevFolders.map(f => 
+              f.id === folderId 
+                ? { ...f, documents }
+                : f
+            )
+          );
+        }
+      }
+    }
+  }, [folders]);
+
+  // 인덱싱 중인 문서들의 상태를 주기적으로 확인
+  useEffect(() => {
+    // 기존 인터벌 정리
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+
+    // 인덱싱 중인 문서가 있는지 확인
+    const hasProcessingDocuments = folders.some(folder => 
+      folder.documents.some(doc => doc.status === 'processing')
+    );
+
+    if (hasProcessingDocuments) {
+      // 1분마다 상태 확인
+      pollingIntervalRef.current = setInterval(() => {
+        checkDocumentStatuses();
+      }, 60000);  // 60000ms = 1분
+    }
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [folders, checkDocumentStatuses]);
 
   const loadFolders = async () => {
     const folderList = await getFolders();
@@ -41,6 +120,7 @@ export function Dashboard() {
       }
     }
   };
+
 
   const handleFolderSelect = async (folderId: string | null) => {
     setSelectedFolderId(folderId);
@@ -71,6 +151,19 @@ export function Dashboard() {
     const result = await uploadDocument(file, targetFolderId);
     if (result.success) {
       await loadFolders();
+      
+      // 업로드된 문서가 PDF인 경우 상태 폴링 시작
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        // 폴더를 확장하여 새로 업로드된 문서를 표시
+        if (targetFolderId) {
+          const newExpanded = new Set(expandedFolders);
+          newExpanded.add(targetFolderId);
+          setExpandedFolders(newExpanded);
+          
+          // 문서 로드
+          await handleLoadDocuments(targetFolderId);
+        }
+      }
     } else {
       throw new Error(result.error || '업로드 실패');
     }
