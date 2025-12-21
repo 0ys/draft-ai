@@ -23,6 +23,9 @@ export const theme = {
     Green: '#10B981',
     GreenLight: '#ECFDF5',
     Red: '#EF4444',
+    
+    // 문서 타입별 색상
+    DocBlue: '#2563EB',  // Word 문서 색상
   },
   
   fonts: {

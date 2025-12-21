@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import styled from '@emotion/styled';
 import { useTheme } from '@emotion/react';
+import { useRouter } from 'next/navigation';
 import { Folder } from '@/types';
 import { FolderTree } from '@/components/Knowledge/FolderTree';
 import { FileUploadButton } from '@/components/Knowledge/FileUploadButton';
@@ -29,6 +31,37 @@ export function KnowledgeSidebar({
   onToggleFolder,
 }: KnowledgeSidebarProps) {
   const theme = useTheme();
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // 모달 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        buttonRef.current &&
+        !modalRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsModalOpen(false);
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isModalOpen]);
+
+  const handleLogout = () => {
+    // 로그아웃 로직 (필요시 추가)
+    router.push('/login');
+  };
 
   return (
     <Wrapper>
@@ -70,14 +103,28 @@ export function KnowledgeSidebar({
       {/* 4. 하단 프로필 영역 */}
       <Footer>
         <UserProfile>
-          <Avatar>YS</Avatar>
+          <Avatar>
+            <SvgIcon name="user" size={20} color={theme.colors.Primary} />
+          </Avatar>
           <UserInfo>
             <UserName>공예슬</UserName>
             <UserDept>서울시 식품의약부</UserDept>
           </UserInfo>
-          <SettingsButton>
-            <SvgIcon name="setting" size={20} color="#94A3B8" />
-          </SettingsButton>
+          <SettingsButtonContainer>
+            <SettingsButton
+              ref={buttonRef}
+              onClick={() => setIsModalOpen(!isModalOpen)}
+            >
+              <SvgIcon name="setting" size={20} color="#94A3B8" />
+            </SettingsButton>
+            {isModalOpen && (
+              <SettingsModal ref={modalRef}>
+                <LogoutButton onClick={handleLogout}>
+                  로그아웃
+                </LogoutButton>
+              </SettingsModal>
+            )}
+          </SettingsButtonContainer>
         </UserProfile>
       </Footer>
     </Wrapper>
@@ -188,13 +235,11 @@ const Avatar = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #DBEAFE;
-  color: #2563EB;
+  background-color: ${({ theme }) => theme.colors.White};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
 `;
 
 const UserInfo = styled.div`
@@ -214,6 +259,10 @@ const UserDept = styled.span`
   color: ${({ theme }) => theme.colors.Slate500};
 `;
 
+const SettingsButtonContainer = styled.div`
+  position: relative;
+`;
+
 const SettingsButton = styled.button`
   background: none;
   border: none;
@@ -226,5 +275,42 @@ const SettingsButton = styled.button`
   
   &:hover {
     background-color: ${({ theme }) => theme.colors.Slate200};
+  }
+`;
+
+const SettingsModal = styled.div`
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  background-color: ${({ theme }) => theme.colors.White};
+  border: 1px solid ${({ theme }) => theme.colors.Slate200};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  min-width: 120px;
+  z-index: 1000;
+`;
+
+const LogoutButton = styled.button`
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.Slate950};
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.Slate50};
+  }
+  
+  &:first-of-type {
+    border-radius: ${({ theme }) => theme.borderRadius.md} ${({ theme }) => theme.borderRadius.md} 0 0;
+  }
+  
+  &:last-of-type {
+    border-radius: 0 0 ${({ theme }) => theme.borderRadius.md} ${({ theme }) => theme.borderRadius.md};
   }
 `;

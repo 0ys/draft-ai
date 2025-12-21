@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 import { QAChunk } from '@/types';
+import { SvgIcon } from '@/components/icons';
 
 type EvidenceCardProps = {
   evidence: QAChunk;
@@ -10,6 +12,7 @@ type EvidenceCardProps = {
 };
 
 export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
+  const theme = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   
   // 유사도 점수를 백분율로 변환 (0-1 범위를 0-100으로)
@@ -19,6 +22,28 @@ export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
 
   const handleCardClick = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  // 파일 확장자에 따라 아이콘 결정
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (extension === 'pdf') {
+      return 'pdf';
+    } else if (extension === 'doc' || extension === 'docx') {
+      return 'doc';
+    }
+    return 'file'; // 기본값
+  };
+
+  // 파일 확장자에 따라 아이콘 색상 결정
+  const getFileIconColor = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (extension === 'pdf') {
+      return theme.colors.Red;
+    } else if (extension === 'doc' || extension === 'docx') {
+      return theme.colors.DocBlue;
+    }
+    return theme.colors.Slate500; // 기본값
   };
 
   return (
@@ -60,8 +85,13 @@ export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
 
       <Footer>
         <FooterText>
-          📄 {evidence.source.fileName}
-        {evidence.source.page && ` (p.${evidence.source.page})`}
+          <SvgIcon 
+            name={getFileIcon(evidence.source.fileName)} 
+            size={16} 
+            color={getFileIconColor(evidence.source.fileName)} 
+          />
+          {evidence.source.fileName}
+          {evidence.source.page && ` (p.${evidence.source.page})`}
         </FooterText>
       </Footer>
     </Card>

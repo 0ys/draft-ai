@@ -2,6 +2,7 @@
 
 import styled from '@emotion/styled';
 import { useState } from 'react';
+import Image from 'next/image';
 
 type DraftEditorProps = {
   draft: string;
@@ -26,7 +27,15 @@ export function DraftEditor({ draft, onDraftChange }: DraftEditorProps) {
       <Toolbar>
         <Title>생성된 초안</Title>
         <CopyButton onClick={handleCopy}>
-          {isCopied ? '✓ 복사됨' : '📋 복사'}
+          <CopyIconWrapper>
+            <Image 
+              src="/icons/copy.png" 
+              alt="copy" 
+              width={16} 
+              height={16}
+            />
+          </CopyIconWrapper>
+          {isCopied ? '복사됨' : '복사'}
         </CopyButton>
       </Toolbar>
 
@@ -74,6 +83,12 @@ const CopyButton = styled.button`
   &:hover {
     background-color: ${({ theme }) => theme.colors.Slate200};
   }
+`;
+
+const CopyIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const Editor = styled.textarea`
