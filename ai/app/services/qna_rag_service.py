@@ -23,6 +23,7 @@ from llama_index.core import (
 )
 from llama_index.core.node_parser import MarkdownElementNodeParser
 from llama_index.core.schema import TextNode
+from llama_index.core.prompts import PromptTemplate
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
 from llama_parse import LlamaParse
@@ -234,9 +235,8 @@ class QnARAGService:
         마크다운 텍스트에서 질문-답변 쌍을 추출
         
         여러 방법을 순차적으로 시도:
-        1. 정규표현식 기반 파싱 (빠름)
-        2. 마크다운 구조 분석 (중간)
-        3. LLM 기반 구조화 파싱 (정확하지만 느리고 비용 발생)
+        1. 마크다운 구조 분석
+        2. LLM 기반 구조화 파싱 (정확하지만 느리고 비용 발생)
         
         Args:
             text: 마크다운 텍스트
@@ -247,114 +247,15 @@ class QnARAGService:
         """
         qna_pairs = []
         
-        # 방법 1: 정규표현식 기반 파싱 (가장 빠름)
-        # 패턴 1: Q: / A: 형식 (영문)
-        pattern1 = re.compile(
-            r'(?:^|\n)\s*(?:Q|Question)[:\.]\s*(.+?)(?:\n\s*(?:A|Answer)[:\.]\s*(.+?))(?=\n\s*(?:Q|Question)[:\.]|$)',
-            re.DOTALL | re.IGNORECASE | re.MULTILINE
-        )
+        # 방법 1: 마크다운 구조 분석 시도
+        qna_pairs = self._parse_qna_pairs_with_markdown_structure(text)
         
-        # 패턴 2: 질문: / 답변: 형식 (한글)
-        pattern2 = re.compile(
-            r'(?:^|\n)\s*질문[:\.]\s*(.+?)(?:\n\s*답변[:\.]\s*(.+?))(?=\n\s*질문[:\.]|$)',
-            re.DOTALL | re.MULTILINE
-        )
-        
-        # 패턴 3: Q1. / A1. 형식 (번호 포함)
-        pattern3 = re.compile(
-            r'(?:^|\n)\s*(?:Q|Question)\s*\d+[:\.]\s*(.+?)(?:\n\s*(?:A|Answer)\s*\d+[:\.]\s*(.+?))(?=\n\s*(?:Q|Question)\s*\d+[:\.]|$)',
-            re.DOTALL | re.IGNORECASE | re.MULTILINE
-        )
-        
-        # 패턴 4: 번호. 질문\n   답변 (들여쓰기로 구분)
-        pattern4 = re.compile(
-            r'(?:^|\n)\s*(\d+)[:\.]\s*(.+?)(?:\n\s{2,}(.+?))(?=\n\s*\d+[:\.]|$)',
-            re.DOTALL | re.MULTILINE
-        )
-        
-        # 모든 패턴 시도
-        all_matches = []
-        
-        for match in pattern1.finditer(text):
-            question = match.group(1).strip()
-            answer = match.group(2).strip() if match.lastindex >= 2 else ""
-            if question and answer:
-                all_matches.append((match.start(), {"question": question, "answer": answer}))
-        
-        for match in pattern2.finditer(text):
-            question = match.group(1).strip()
-            answer = match.group(2).strip() if match.lastindex >= 2 else ""
-            if question and answer:
-                all_matches.append((match.start(), {"question": question, "answer": answer}))
-        
-        for match in pattern3.finditer(text):
-            question = match.group(1).strip()
-            answer = match.group(2).strip() if match.lastindex >= 2 else ""
-            if question and answer:
-                all_matches.append((match.start(), {"question": question, "answer": answer}))
-        
-        for match in pattern4.finditer(text):
-            question = match.group(2).strip()
-            answer = match.group(3).strip() if match.lastindex >= 3 else ""
-            if question and answer:
-                all_matches.append((match.start(), {"question": question, "answer": answer}))
-        
-        # 위치 순으로 정렬하고 중복 제거
-        all_matches.sort(key=lambda x: x[0])
-        seen = set()
-        for pos, pair in all_matches:
-            pair_key = (pair["question"][:50], pair["answer"][:50])  # 처음 50자로 중복 체크
-            if pair_key not in seen:
-                seen.add(pair_key)
-                qna_pairs.append(pair)
-        
-        # 방법 2: 정규표현식이 실패하면 마크다운 구조 분석 시도
-        if not qna_pairs:
-            print("정규표현식 파싱 실패, 마크다운 구조 분석 시도...")
-            qna_pairs = self._parse_qna_pairs_with_markdown_structure(text)
-        
-        # 방법 3: 마크다운 구조 분석도 실패하면 LLM 사용 (옵션)
+        # 방법 2: 마크다운 구조 분석이 실패하면 LLM 사용 (옵션)
         if not qna_pairs and use_llm:
             print("마크다운 구조 분석 실패, LLM 기반 파싱 시도...")
             llm_pairs = self._parse_qna_pairs_with_llm(text)
             if llm_pairs:
                 qna_pairs = llm_pairs
-        
-        # 방법 4: 최후의 수단 - 줄 단위 파싱
-        if not qna_pairs:
-            # 줄 단위로 분할하여 질문/답변 구분 시도
-            lines = text.split('\n')
-            current_question = None
-            current_answer = []
-            
-            for line in lines:
-                line_stripped = line.strip()
-                # 질문 시작 패턴 감지
-                if re.match(r'^(?:Q|Question|질문)[:\.]', line_stripped, re.IGNORECASE):
-                    # 이전 Q&A 쌍 저장
-                    if current_question and current_answer:
-                        qna_pairs.append({
-                            "question": current_question,
-                            "answer": "\n".join(current_answer).strip()
-                        })
-                    # 새 질문 시작
-                    current_question = re.sub(r'^(?:Q|Question|질문)[:\.]\s*', '', line_stripped, flags=re.IGNORECASE)
-                    current_answer = []
-                # 답변 시작 패턴 감지
-                elif re.match(r'^(?:A|Answer|답변)[:\.]', line_stripped, re.IGNORECASE):
-                    answer_text = re.sub(r'^(?:A|Answer|답변)[:\.]\s*', '', line_stripped, flags=re.IGNORECASE)
-                    if current_question:
-                        current_answer.append(answer_text)
-                # 답변 내용 계속
-                elif current_question and line_stripped:
-                    current_answer.append(line_stripped)
-            
-            # 마지막 Q&A 쌍 저장
-            if current_question and current_answer:
-                qna_pairs.append({
-                    "question": current_question,
-                    "answer": "\n".join(current_answer).strip()
-                })
         
         return qna_pairs
 
@@ -391,8 +292,7 @@ class QnARAGService:
                 
                 for qna_idx, qna_pair in enumerate(qna_pairs):
                     # 질문과 답변을 하나의 텍스트로 결합
-                    # 형식: "질문: {question}\n답변: {answer}"
-                    combined_text = f"질문: {qna_pair['question']}\n답변: {qna_pair['answer']}"
+                    combined_text = f"{qna_pair['question']}\n\n{qna_pair['answer']}"
                     
                     # 메타데이터 구성
                     node_metadata = {
@@ -638,23 +538,84 @@ class QnARAGService:
         # 상위 k개 노드 선택
         top_nodes = nodes[:similarity_top_k]
         
-        # 답변 생성
-        from llama_index.core import Document
-        from llama_index.core import VectorStoreIndex
-        from llama_index.core.query_engine import RetrieverQueryEngine
+        # 커스텀 프롬프트 생성 (민원 답변서 형식)
+        from datetime import datetime
+        current_date = datetime.now().strftime("%Y. %m. %d.")
         
-        # 임시 인덱스 생성
-        temp_docs = [Document(text=node['content'], metadata=node.get('metadata', {})) for node in top_nodes]
-        temp_index = VectorStoreIndex.from_documents(temp_docs)
-        temp_retriever = temp_index.as_retriever(similarity_top_k=len(top_nodes))
-        query_engine = RetrieverQueryEngine.from_args(
-            retriever=temp_retriever,
-            response_mode="compact",
-        )
+        # RAG에서 검색된 노드의 내용을 수집
+        context_texts = []
+        for node in top_nodes:
+            content = node.get('content', '')
+            if content:
+                context_texts.append(content)
+        
+        # 컨텍스트를 하나의 문자열로 결합
+        context_str = "\n\n---\n\n".join(context_texts)
+        
+        # 민원 답변서 형식 프롬프트
+        prompt_text = f"""당신은 공공기관의 민원 담당자입니다. 아래 제공된 참고 문서의 정보를 바탕으로 민원 답변서 초안을 작성해주세요.
 
+**중요 지침:**
+1. 반드시 제공된 참고 문서의 정보만을 사용하여 답변을 작성하세요. 참고 문서에 없는 내용은 추가하지 마세요.
+2. 참고 문서의 구체적인 수치, 기준, 법령명, 규칙명 등을 정확히 인용하세요.
+3. 참고 문서의 정보를 최대한 활용하여 상세하고 정확한 답변을 작성하세요.
+4. 민원 답변서 형식을 정확히 따르세요.
+5. 수치나 기준이 있는 경우 표 형식으로 명확하게 제시하세요.
+6. 시간대 구분(주간/야간, 오전/오후 등)이 있는 경우 이모지(☀️, 🌙 등)를 사용하여 시각적으로 구분하세요.
+
+**참고 문서 정보:**
+{context_str}
+
+**질문:**
+{question}
+
+**민원 답변서 작성 형식:**
+
+민원 답변서 (초안)
+수신: 민원인 귀하
+일자: {current_date}
+
+안녕하십니까, 서울시정에 깊은 관심을 가져주시는 귀하께 감사드립니다.
+귀하께서 국민신문고를 통해 질의하신 "{question}"에 대해 다음과 같이 답변 드립니다.
+
+info
+핵심 답변 요약
+
+[참고 문서에서 추출한 핵심 답변을 1-2문장으로 요약. 법령명이나 규칙명이 있으면 반드시 포함하세요.]
+
+[상세 답변 내용]
+
+1. [주제 1 - 참고 문서의 주요 내용을 바탕으로 작성]
+[참고 문서의 구체적인 정보를 바탕으로 작성]
+- 구체적인 수치나 기준이 있으면 명시
+- 법령명, 규칙명이 있으면 정확히 인용 (예: 「공동주택 층간소음의 범위와 기준에 관한 규칙」)
+- 시간대별 기준이 있는 경우 표 형식으로 제시:
+  ☀️ 주간 (시간대)
+  [수치] [기존 수치가 있으면 함께 표시]
+  🌙 야간 (시간대)
+  [수치] [기존 수치가 있으면 함께 표시]
+
+2. [주제 2] (필요한 경우)
+[참고 문서의 정보를 바탕으로 작성]
+- 참고 문서에 있는 모든 관련 정보를 포함하세요
+
+3. 참고 사항
+[참고 문서에서 추가로 제공할 수 있는 유용한 정보]
+- 예외 사항이나 주의사항
+- 관련 기관이나 연락처 정보
+
+**중요: 참고 문서의 정보를 최대한 활용하여 상세하고 정확한 답변을 작성해주세요. 참고 문서에 없는 내용은 추가하지 마세요. 모든 수치, 법령명, 규칙명은 참고 문서에서 정확히 인용하세요.**
+
+서울시 주택정책과장
+
+담당자: [담당자명] 주무관 ([연락처])
+"""
+        
         print(f"질문: {question} ({len(document_ids)}개 PDF에서 검색)")
-        response = query_engine.query(question)
-        answer = str(response) if response else ""
+        
+        # LLM을 직접 사용하여 답변 생성
+        response = self.llm.complete(prompt_text)
+        answer = str(response).strip() if response else ""
         print(f"답변 생성 완료: 길이={len(answer)}")
 
         return answer
