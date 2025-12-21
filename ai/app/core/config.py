@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     postgres_database: Optional[str] = None
     postgres_user: Optional[str] = None
     postgres_password: Optional[str] = None
+    
+    # Google OAuth 설정
+    google_client_id: Optional[str] = None
+    google_client_secret: Optional[str] = None
+    google_redirect_uri: Optional[str] = None  # 예: http://localhost:3000/api/auth/callback
+    
+    # JWT 설정
+    jwt_secret_key: str = "draft-ai-secret-key-change-in-production"  # 프로덕션에서는 반드시 변경하세요!
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 60 * 24 * 7  # 7일
 
     class Config:
         env_file = ".env"

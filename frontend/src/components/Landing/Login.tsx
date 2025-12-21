@@ -1,22 +1,93 @@
 import styled from '@emotion/styled';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { googleLogin } from '@/apis/auth';
+import { setAccessToken, setUser } from '@/utils/auth';
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (element: HTMLElement, config: { theme?: string; size?: string; width?: string }) => void;
+          prompt: () => void;
+        };
+      };
+    };
+  }
+}
 
 export function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleGoogleSignIn = useCallback(async (response: { credential: string }) => {
     setIsLoading(true);
+    setError(null);
 
-    // MVP: 간단한 인증 로직 (실제로는 서버 API 호출)
-    setTimeout(() => {
+    try {
+      // 백엔드로 구글 ID 토큰 전송
+      const result = await googleLogin(response.credential);
+
+      // 토큰과 사용자 정보 저장
+      setAccessToken(result.access_token);
+      setUser(result.user);
+
+      // 대시보드로 리다이렉트
       router.push('/dashboard');
-    }, 500);
-  };
+    } catch (err: any) {
+      console.error('구글 로그인 실패:', err);
+      setError(err.response?.data?.detail || '로그인에 실패했습니다. 다시 시도해주세요.');
+      setIsLoading(false);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    // Google Identity Services 스크립트 로드
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google) {
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        if (!clientId) {
+          console.error('Google Client ID가 설정되지 않았습니다.');
+          setError('Google Client ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.');
+          return;
+        }
+
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleSignIn,
+        });
+
+        // 구글 로그인 버튼 렌더링
+        const buttonContainer = document.getElementById('google-signin-button');
+        if (buttonContainer && window.google.accounts.id.renderButton) {
+          window.google.accounts.id.renderButton(buttonContainer, {
+            theme: 'outline',
+            size: 'large',
+            width: '300rem',
+          });
+        }
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      // 컴포넌트 언마운트 시 스크립트 제거
+      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, [handleGoogleSignIn]);
 
   return (
     <Wrapper>
@@ -26,38 +97,28 @@ export function Login() {
           <Subtitle>RAG 기반 보고서 초안 생성기</Subtitle>
         </Header>
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label htmlFor="email">이메일</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              required
-              placeholder="your@email.com"
-            />
-          </FormGroup>
+        {error && (
+          <ErrorBox>
+            <p>{error}</p>
+          </ErrorBox>
+        )}
 
-          <FormGroup>
-            <Label htmlFor="password">비밀번호</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-          </FormGroup>
+        <GoogleSignInContainer>
+          {isLoading ? (
+            <LoadingText>로그인 중...</LoadingText>
+          ) : (
+            <div id="google-signin-button"></div>
+          )}
+        </GoogleSignInContainer>
 
-          <SubmitButton type="submit" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
-          </SubmitButton>
-        </Form>
+        <Divider>
+          <DividerLine />
+          <DividerText>또는</DividerText>
+          <DividerLine />
+        </Divider>
 
         <MvpNotice>
-          <p>MVP 버전: 이메일과 비밀번호를 입력하면 바로 로그인됩니다.</p>
+          <p>구글 계정으로 로그인하여 서비스를 이용하세요.</p>
         </MvpNotice>
       </Container>
     </Wrapper>
@@ -99,63 +160,55 @@ const Subtitle = styled.p`
   color: ${({ theme }) => theme.colors.Slate500};
 `;
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const Label = styled.label`
-  ${({ theme }) => theme.fonts.Body2};
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.Slate700};
-  margin-bottom: 0.5rem;
-`;
-
-const Input = styled.input`
+const GoogleSignInContainer = styled.div`
   width: 100%;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  
+  #google-signin-button {
+    display: flex;
+    justify-content: center;
+  }
+`;
+
+const LoadingText = styled.div`
+  ${({ theme }) => theme.fonts.Body1};
+  color: ${({ theme }) => theme.colors.Slate700};
+  text-align: center;
+  padding: 1rem;
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.5rem 0;
+`;
+
+const DividerLine = styled.div`
+  flex: 1;
+  height: 1px;
+  background-color: ${({ theme }) => theme.colors.Slate200};
+`;
+
+const DividerText = styled.span`
+  ${({ theme }) => theme.fonts.Caption};
+  color: ${({ theme }) => theme.colors.Slate500};
+`;
+
+const ErrorBox = styled.div`
+  margin-bottom: 1.5rem;
   padding: 0.75rem 1rem;
   background-color: ${({ theme }) => theme.colors.Slate100};
-  border: 1px solid ${({ theme }) => theme.colors.Slate200};
+  border: 1px solid ${({ theme }) => theme.colors.Red};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  color: ${({ theme }) => theme.colors.Slate950};
-  ${({ theme }) => theme.fonts.Body1};
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.Slate400};
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.Primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.Primary}33;
-  }
-`;
-
-const SubmitButton = styled.button`
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background-color: ${({ theme }) => theme.colors.Primary};
-  color: ${({ theme }) => theme.colors.White};
-  border: none;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  ${({ theme }) => theme.fonts.Body1};
-  cursor: pointer;
-  transition: background-color 0.2s;
-
-  &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.Primary};
-    opacity: 0.9;
-  }
-
-  &:disabled {
-    background-color: ${({ theme }) => theme.colors.Slate200};
-    cursor: not-allowed;
+  
+  p {
+    ${({ theme }) => theme.fonts.Body2};
+    color: ${({ theme }) => theme.colors.Red};
+    margin: 0;
+    text-align: center;
   }
 `;
 

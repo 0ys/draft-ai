@@ -11,3 +11,11 @@ export {
   queryDocumentsFromBackend
 } from './documents';
 
+// 인증 관련 API
+export {
+  googleLogin,
+  getCurrentUser,
+  type TokenResponse,
+  type UserResponse,
+} from './auth';
+

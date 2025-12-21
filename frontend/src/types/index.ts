@@ -45,3 +45,10 @@ export type Folder = {
   documentCount: number;
   documents: Document[];  // 클라이언트에서 필요시 로드
 };
+
+export type User = {
+  id: string;
+  email: string;
+  name: string | null;
+  picture: string | null;
+};
