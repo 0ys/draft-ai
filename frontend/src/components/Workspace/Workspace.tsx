@@ -30,6 +30,11 @@ export function Workspace({ folders, selectedFolderId, onGenerate }: WorkspacePr
       return;
     }
 
+    if (!searchFolderId) {
+      alert('참조할 폴더를 선택해주세요.');
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const result = await onGenerate(question, searchFolderId);

@@ -2,6 +2,7 @@
 
 import styled from '@emotion/styled';
 import { useState } from 'react';
+import { useTheme } from '@emotion/react';
 import { Folder, Document } from '@/types';
 import { getFolderName } from '@/utils';
 import { SvgIcon } from '@/components/icons';
@@ -17,15 +18,15 @@ type FolderTreeProps = {
   onDocumentDelete?: (documentId: string, folderId: string) => Promise<void>;  // 문서 삭제 핸들러
 };
 
-function getDocumentIcon(fileName: string): { name: string; color: string } {
+function getDocumentIcon(fileName: string, theme: any): { name: string; color: string } {
   const extension = fileName.split('.').pop()?.toLowerCase();
   
   if (extension === 'pdf') {
-    return { name: 'pdf', color: '#EF4444' }; // 빨간색
+    return { name: 'pdf', color: theme.colors.Red };
   } else if (extension === 'doc' || extension === 'docx') {
-    return { name: 'doc', color: '#2563EB' }; // 파란색
+    return { name: 'doc', color: theme.colors.DocBlue };
   } else {
-    return { name: 'file', color: '#64748B' }; // 기본 회색
+    return { name: 'file', color: theme.colors.Slate500 };
   }
 }
 
@@ -38,6 +39,7 @@ export function FolderTree({
   onLoadDocuments,
   onDocumentDelete,
 }: FolderTreeProps) {
+  const theme = useTheme();
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
 
   // 계층 구조를 위한 정렬 (parentId가 null인 것부터, 그 다음 자식들)
@@ -105,7 +107,7 @@ export function FolderTree({
             {isExpanded && folder.documents.length > 0 && (
               <DocumentList>
                 {folder.documents.map((document) => {
-                  const { name: iconName, color: iconColor } = getDocumentIcon(document.fileName);
+                  const { name: iconName, color: iconColor } = getDocumentIcon(document.fileName, theme);
                   const isSelected = selectedDocumentId === document.id;
                   return (
                     <DocumentItem 

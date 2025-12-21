@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { KnowledgeSidebar } from '@/components/Knowledge/KnowledgeSidebar';
 import { Workspace } from '@/components/Workspace/Workspace';
 import { EvidencePanel } from '@/components/Evidence/EvidencePanel';
+import { SvgIcon } from '@/components/icons';
 import { Folder, DraftResult, Document } from '@/types';
 import { uploadDocument, getFolders, getDocuments, generateDraft, deleteDocument, getDocumentStatus } from '@/app/actions';
 
@@ -229,7 +230,9 @@ export function Dashboard() {
           />
         ) : (
           <ToggleButton onClick={() => setIsEvidencePanelOpen(true)}>
-            <ToggleIcon>📚</ToggleIcon>
+            <ToggleIcon>
+              <SvgIcon name="file" size={24} />
+            </ToggleIcon>
             <ToggleText>참고 문헌</ToggleText>
           </ToggleButton>
         )}
@@ -270,7 +273,7 @@ const ToggleButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.White};
+  background-color: ${({ theme }) => theme.colors.PrimaryLight};
   border: none;
   border-left: 1px solid ${({ theme }) => theme.colors.Slate200};
   cursor: pointer;
@@ -278,12 +281,15 @@ const ToggleButton = styled.button`
   padding: 1rem 0;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.Slate50};
+    background-color: ${({ theme }) => theme.colors.PrimaryLight};
+    opacity: 0.9;
   }
 `;
 
 const ToggleIcon = styled.span`
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 `;
 
