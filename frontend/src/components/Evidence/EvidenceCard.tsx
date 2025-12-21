@@ -62,10 +62,12 @@ export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
         </HeaderRight>
       </CardHeader>
 
-      <Section>
-        <SectionTitle>유사 질문</SectionTitle>
-        <QuestionText>{evidence.question}</QuestionText>
-      </Section>
+      {evidence.question && (
+        <Section>
+          <SectionTitle>유사 질문</SectionTitle>
+          <QuestionText>{evidence.question}</QuestionText>
+        </Section>
+      )}
 
       <Section>
         <SectionTitle>답변 요약</SectionTitle>
