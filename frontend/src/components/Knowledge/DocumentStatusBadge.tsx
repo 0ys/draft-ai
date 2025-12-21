@@ -11,9 +11,13 @@ type DocumentStatusBadgeProps = {
 
 export function DocumentStatusBadge({ status, size = 16 }: DocumentStatusBadgeProps) {
   const statusConfig = {
+    uploaded: {
+      icon: '/icons/check-gray.png',
+      alt: '업로드 완료',
+    },
     processing: {
       icon: '/icons/check-gray.png',
-      alt: '처리 중',
+      alt: '인덱싱 중',
     },
     completed: {
       icon: '/icons/check-green.png',
