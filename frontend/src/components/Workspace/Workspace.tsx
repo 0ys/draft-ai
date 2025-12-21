@@ -3,6 +3,7 @@
 import styled from '@emotion/styled';
 import { useState, useEffect } from 'react';
 import { Folder, DraftResult } from '@/types';
+import { LoadingSpinner } from '@/components/Loading';
 import { QuestionInput } from './QuestionInput';
 import { FolderSelect } from './FolderSelect';
 import { GenerateButton } from './GenerateButton';
@@ -75,7 +76,11 @@ export function Workspace({ folders, selectedFolderId, onGenerate }: WorkspacePr
       </InputSection>
 
       <ContentSection>
-        {draftResult ? (
+        {isGenerating ? (
+          <LoadingOverlay>
+            <LoadingSpinner size="lg" message="초안을 생성하고 있습니다..." />
+          </LoadingOverlay>
+        ) : draftResult ? (
           <DraftEditor
             draft={draftResult.draft}
             onDraftChange={(newDraft) => {
@@ -151,4 +156,14 @@ const EmptyTitle = styled.p`
 const EmptyText = styled.p`
   ${({ theme }) => theme.fonts.Body2};
   color: ${({ theme }) => theme.colors.Slate400};
+`;
+
+const LoadingOverlay = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
 `;
