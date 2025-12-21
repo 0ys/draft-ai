@@ -182,8 +182,14 @@ async def upload_document(
         # 에러 발생 시 상대 경로 사용
         relative_path = str(file_path)
     
-    # DB에 문서 정보 저장
+    # ============================================
+    # 1단계: 파일 시스템에 저장 및 DB에 메타데이터 저장
+    # ============================================
     try:
+        # 파일 저장 완료 후 초기 상태는 'uploaded'로 설정
+        # PDF인 경우 백그라운드에서 인덱싱이 시작되면 'processing'으로 변경됨
+        initial_status = "uploaded" if file_extension.lower() == "pdf" else "completed"
+        
         document_data = {
             "user_id": user_id,
             "folder_id": folder_id,  # folder_id 사용 (NULL 가능)
@@ -192,7 +198,7 @@ async def upload_document(
             "file_path": relative_path,
             "file_size": len(contents),
             "content_type": file.content_type,
-            "status": "processing",  # processing, completed, failed
+            "status": initial_status,  # uploaded, processing, completed, failed
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
         }
@@ -204,18 +210,10 @@ async def upload_document(
         print(f"DB 저장 실패: {e}")
         document_id = None
     
-    # PDF 파일인 경우 백그라운드 인덱싱 작업 추가
-    if document_id and file_extension.lower() == "pdf":
-        background_tasks.add_task(
-            index_document_background,
-            document_id=document_id,
-            pdf_path=absolute_path,
-            folder_id=folder_id,
-            user_id=user_id,
-        )
-    
-    # 파일 정보 반환
-    return {
+    # ============================================
+    # 2단계: 즉시 응답 반환 (파일 저장 및 DB 저장 완료)
+    # ============================================
+    response_data = {
         "success": True,
         "document_id": document_id,
         "filename": original_filename,
@@ -225,9 +223,29 @@ async def upload_document(
         "folder_id": folder_id,
         "file_path": relative_path,
         "absolute_path": absolute_path,
-        "status": "processing" if document_id and file_extension.lower() == "pdf" else "completed",
+        "status": initial_status if document_id else "failed",
         "message": "파일이 성공적으로 업로드되었습니다.",
     }
+    
+    # ============================================
+    # 3단계: 백그라운드 인덱싱 작업 등록
+    # (응답 반환 후 자동으로 실행됨)
+    # ============================================
+    if document_id and file_extension.lower() == "pdf":
+        # BackgroundTasks는 응답이 클라이언트에 전송된 후에 실행됩니다.
+        # 따라서 파일 저장 및 응답 반환은 즉시 완료되고,
+        # 인덱싱은 백그라운드에서 비동기로 진행됩니다.
+        background_tasks.add_task(
+            index_document_background,
+            document_id=document_id,
+            pdf_path=absolute_path,
+            folder_id=folder_id,
+            user_id=user_id,
+        )
+    
+    # 응답 반환 (이 시점에서 클라이언트는 즉시 응답을 받고,
+    # 인덱싱은 백그라운드에서 시작됩니다)
+    return response_data
 
 
 @router.get("/list")
@@ -640,6 +658,10 @@ async def query_documents(
             # original_filename 가져오기 (없으면 pdf_name 사용)
             original_filename = doc_id_to_original_filename.get(document_id, pdf_name)
             
+            # 메타데이터에서 질문 추출 (Q&A 쌍인 경우)
+            node_metadata = node.metadata if hasattr(node, 'metadata') and node.metadata else {}
+            chunk_question = node_metadata.get('question') if isinstance(node_metadata, dict) else None
+            
             node_info = {
                 "score": node.score if hasattr(node, 'score') and node.score is not None else None,
                 "text": node.text[:500] if hasattr(node, 'text') and node.text else "",
@@ -647,6 +669,7 @@ async def query_documents(
                 "document_id": document_id,
                 "pdf_name": pdf_name,
                 "original_filename": original_filename,
+                "question": chunk_question,  # 메타데이터의 질문 (Q&A 쌍인 경우)
             }
             retrieved_nodes.append(node_info)
             

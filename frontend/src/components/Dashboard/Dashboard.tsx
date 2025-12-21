@@ -30,12 +30,12 @@ export function Dashboard() {
 
   // 인덱싱 중인 문서들의 상태를 주기적으로 확인하는 함수
   const checkDocumentStatuses = useCallback(async () => {
-    // 현재 폴더 상태를 기반으로 처리 중인 문서 찾기
+    // 현재 폴더 상태를 기반으로 처리 중인 문서 찾기 (uploaded 또는 processing 상태)
     const processingDocuments: Array<{ documentId: string; folderId: string }> = [];
     
     folders.forEach(folder => {
       folder.documents.forEach(doc => {
-        if (doc.status === 'processing') {
+        if (doc.status === 'uploaded' || doc.status === 'processing') {
           processingDocuments.push({
             documentId: doc.id,
             folderId: folder.id,
@@ -49,24 +49,16 @@ export function Dashboard() {
       const statusResult = await getDocumentStatus(documentId);
       
       if (statusResult.success && statusResult.status) {
-        const newStatus = statusResult.status === 'completed' 
-          ? 'completed' 
-          : statusResult.status === 'failed' 
-          ? 'failed' 
-          : 'processing';
-        
         // 상태가 변경되었으면 문서 목록 업데이트
-        if (newStatus !== 'processing') {
-          // 해당 폴더의 문서 목록 새로고침
-          const documents = await getDocuments(folderId);
-          setFolders(prevFolders => 
-            prevFolders.map(f => 
-              f.id === folderId 
-                ? { ...f, documents }
-                : f
-            )
-          );
-        }
+        // uploaded -> processing -> completed/failed로 변경되는 경우 모두 업데이트
+        const documents = await getDocuments(folderId);
+        setFolders(prevFolders => 
+          prevFolders.map(f => 
+            f.id === folderId 
+              ? { ...f, documents }
+              : f
+          )
+        );
       }
     }
   }, [folders]);
@@ -79,9 +71,9 @@ export function Dashboard() {
       pollingIntervalRef.current = null;
     }
 
-    // 인덱싱 중인 문서가 있는지 확인
+    // 인덱싱 중인 문서가 있는지 확인 (uploaded 또는 processing 상태)
     const hasProcessingDocuments = folders.some(folder => 
-      folder.documents.some(doc => doc.status === 'processing')
+      folder.documents.some(doc => doc.status === 'uploaded' || doc.status === 'processing')
     );
 
     if (hasProcessingDocuments) {
@@ -151,19 +143,17 @@ export function Dashboard() {
     
     const result = await uploadDocument(file, targetFolderId);
     if (result.success) {
+      // 폴더 목록 새로고침 (문서 개수 업데이트)
       await loadFolders();
       
-      // 업로드된 문서가 PDF인 경우 상태 폴링 시작
-      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-        // 폴더를 확장하여 새로 업로드된 문서를 표시
-        if (targetFolderId) {
-          const newExpanded = new Set(expandedFolders);
-          newExpanded.add(targetFolderId);
-          setExpandedFolders(newExpanded);
-          
-          // 문서 로드
-          await handleLoadDocuments(targetFolderId);
-        }
+      // 업로드된 문서를 즉시 표시하기 위해 폴더 확장 및 문서 로드
+      if (targetFolderId) {
+        const newExpanded = new Set(expandedFolders);
+        newExpanded.add(targetFolderId);
+        setExpandedFolders(newExpanded);
+        
+        // 문서 목록 즉시 로드 (파일 저장 완료 상태로 표시됨)
+        await handleLoadDocuments(targetFolderId);
       }
     } else {
       throw new Error(result.error || '업로드 실패');

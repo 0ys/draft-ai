@@ -95,13 +95,26 @@ export async function getDocuments(folderId?: string): Promise<Document[]> {
     }
 
     // 백엔드 응답을 Frontend Document 타입으로 변환
-    const documents = (result.documents || []).map((doc: any) => ({
-      id: doc.id,
-      fileName: doc.original_filename,
-      folderId: doc.folder_id || null,
-      status: (doc.status === 'completed' ? 'completed' : (doc.status === 'failed' ? 'failed' : 'processing')) as 'processing' | 'completed' | 'failed',
-      uploadedAt: new Date(doc.created_at),
-    }));
+    const documents = (result.documents || []).map((doc: any) => {
+      let status: 'uploaded' | 'processing' | 'completed' | 'failed' = 'uploaded';
+      if (doc.status === 'completed') {
+        status = 'completed';
+      } else if (doc.status === 'failed') {
+        status = 'failed';
+      } else if (doc.status === 'processing') {
+        status = 'processing';
+      } else if (doc.status === 'uploaded') {
+        status = 'uploaded';
+      }
+      
+      return {
+        id: doc.id,
+        fileName: doc.original_filename,
+        folderId: doc.folder_id || null,
+        status,
+        uploadedAt: new Date(doc.created_at),
+      };
+    });
     return documents;
   } catch (error) {
     console.error('❌ 문서 목록 조회 실패:', error);
@@ -197,7 +210,7 @@ export async function generateDraft(
     // QAChunk 형식으로 변환 (각 노드를 개별 evidence로)
     const evidences = (result.retrievedNodes || []).map((node: any, index: number) => ({
       id: `chunk-${index}`,
-      question: question,
+      question: node.question || null,  // 메타데이터의 질문 (Q&A 쌍인 경우), 없으면 null
       answer: node.full_text || node.text || '',
       source: {
         fileName: node.original_filename || node.pdf_name || 'Unknown',

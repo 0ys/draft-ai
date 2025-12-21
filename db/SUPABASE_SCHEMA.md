@@ -73,7 +73,7 @@ CREATE TABLE documents (
   file_path TEXT NOT NULL,
   file_size INTEGER NOT NULL,
   content_type TEXT NOT NULL,
-  status document_status NOT NULL DEFAULT 'processing', -- ENUM 타입: 'processing', 'completed', 'failed'
+  status document_status NOT NULL DEFAULT 'uploaded', -- ENUM 타입: 'uploaded', 'processing', 'completed', 'failed'
   metadata JSONB DEFAULT '{}', -- PDF 페이지 수, 작성자 등 추가 정보 저장
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -86,8 +86,9 @@ CREATE TABLE documents (
 - `saved_filename`: 서버에 저장된 파일명 (타임스탬프 + UUID)
 - `file_path`: 저장 경로 (상대 경로)
 - `status`: 문서 처리 상태
-  - `processing`: 처리 중
-  - `completed`: 처리 완료
+  - `uploaded`: 파일 업로드 완료 (인덱싱 시작 전)
+  - `processing`: 인덱싱 진행 중
+  - `completed`: 인덱싱 완료
   - `failed`: 처리 실패
 - `metadata`: JSONB 형식으로 추가 정보 저장 (페이지 수, 작성자 등)
 
@@ -240,8 +241,14 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 문서 처리 상태를 관리하기 위한 ENUM 타입입니다.
 
 ```sql
-CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+CREATE TYPE document_status AS ENUM ('uploaded', 'processing', 'completed', 'failed');
 ```
+
+**상태 설명:**
+- `uploaded`: 파일 업로드 완료 (인덱싱 시작 전)
+- `processing`: 인덱싱 진행 중
+- `completed`: 인덱싱 완료
+- `failed`: 처리 실패
 
 ---
 
@@ -285,7 +292,7 @@ VALUES (
 
 2. ENUM 타입 생성
    ```sql
-   CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+   CREATE TYPE document_status AS ENUM ('uploaded', 'processing', 'completed', 'failed');
    ```
 
 3. 테이블 생성 (순서 중요)
@@ -300,11 +307,11 @@ VALUES (
 
 ```sql
 -- 1. ENUM 타입 생성 (이미 있으면 스킵)
-CREATE TYPE document_status AS ENUM ('processing', 'completed', 'failed');
+CREATE TYPE document_status AS ENUM ('uploaded', 'processing', 'completed', 'failed');
 
 -- 2. 기존 데이터 검증 (잘못된 값이 있는지 확인)
 SELECT DISTINCT status FROM documents 
-WHERE status NOT IN ('processing', 'completed', 'failed');
+WHERE status NOT IN ('uploaded', 'processing', 'completed', 'failed');
 
 -- 3. 임시 컬럼 추가
 ALTER TABLE documents ADD COLUMN status_new document_status;
@@ -312,10 +319,11 @@ ALTER TABLE documents ADD COLUMN status_new document_status;
 -- 4. 기존 데이터 변환
 UPDATE documents 
 SET status_new = CASE 
+  WHEN status = 'uploaded' THEN 'uploaded'::document_status
   WHEN status = 'processing' THEN 'processing'::document_status
   WHEN status = 'completed' THEN 'completed'::document_status
   WHEN status = 'failed' THEN 'failed'::document_status
-  ELSE 'processing'::document_status  -- 기본값
+  ELSE 'uploaded'::document_status  -- 기본값
 END;
 
 -- 5. 기존 컬럼 삭제 및 새 컬럼 이름 변경
@@ -326,7 +334,7 @@ ALTER TABLE documents RENAME COLUMN status_new TO status;
 ALTER TABLE documents ALTER COLUMN status SET NOT NULL;
 
 -- 7. 기본값 설정
-ALTER TABLE documents ALTER COLUMN status SET DEFAULT 'processing'::document_status;
+ALTER TABLE documents ALTER COLUMN status SET DEFAULT 'uploaded'::document_status;
 ```
 
 ---
