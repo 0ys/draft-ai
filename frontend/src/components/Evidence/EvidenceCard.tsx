@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import styled from '@emotion/styled';
 import { QAChunk } from '@/types';
 
@@ -9,15 +10,31 @@ type EvidenceCardProps = {
 };
 
 export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  // 유사도 점수를 백분율로 변환 (0-1 범위를 0-100으로)
+  const similarityScore = evidence.score !== undefined 
+    ? Math.round(evidence.score * 100) 
+    : null;
+
+  const handleCardClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <Card>
+    <Card $isExpanded={isExpanded} onClick={handleCardClick}>
       <CardHeader>
-        <IndexBadge>{index}</IndexBadge>
-        <Label>참고 자료</Label>
-        <SourceInfo>
-          {evidence.source.fileName}
-          {evidence.source.page && ` (p.${evidence.source.page})`}
-        </SourceInfo>
+        <HeaderLeft>
+          <IndexBadge>{index}</IndexBadge>
+          <Label>참고 자료</Label>
+        </HeaderLeft>
+        <HeaderRight>
+          {similarityScore !== null && (
+            <ScoreBadge>
+              유사도 {similarityScore}%
+            </ScoreBadge>
+          )}
+        </HeaderRight>
       </CardHeader>
 
       <Section>
@@ -27,30 +44,43 @@ export function EvidenceCard({ evidence, index }: EvidenceCardProps) {
 
       <Section>
         <SectionTitle>답변 요약</SectionTitle>
-        <AnswerText>
-          {evidence.answer.length > 150
-            ? `${evidence.answer.substring(0, 150)}...`
-            : evidence.answer}
+        <AnswerText $isExpanded={isExpanded}>
+          {isExpanded ? evidence.answer : (
+            evidence.answer.length > 150
+              ? `${evidence.answer.substring(0, 150)}...`
+              : evidence.answer
+          )}
         </AnswerText>
+        {evidence.answer.length > 150 && (
+          <ExpandHint>
+            {isExpanded ? '접기' : '전체 보기'} {isExpanded ? '▲' : '▼'}
+          </ExpandHint>
+        )}
       </Section>
 
       <Footer>
-        <FooterText>📄 {evidence.source.fileName}</FooterText>
+        <FooterText>
+          📄 {evidence.source.fileName}
+        {evidence.source.page && ` (p.${evidence.source.page})`}
+        </FooterText>
       </Footer>
     </Card>
   );
 }
 
-const Card = styled.div`
+const Card = styled.div<{ $isExpanded: boolean }>`
   background-color: ${({ theme }) => theme.colors.White};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: 1rem;
   border: 1px solid ${({ theme }) => theme.colors.Slate200};
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
   box-shadow: ${({ theme }) => theme.shadows.card};
+  cursor: pointer;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.Primary};
+    box-shadow: ${({ theme }) => theme.shadows.card};
+    transform: translateY(-1px);
   }
 `;
 
@@ -58,7 +88,19 @@ const CardHeader = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const IndexBadge = styled.span`
@@ -72,6 +114,7 @@ const IndexBadge = styled.span`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 `;
 
 const Label = styled.span`
@@ -80,9 +123,20 @@ const Label = styled.span`
   margin-left: 0.5rem;
 `;
 
+const ScoreBadge = styled.span`
+  ${({ theme }) => theme.fonts.Caption};
+  color: ${({ theme }) => theme.colors.Primary};
+  background-color: ${({ theme }) => theme.colors.Primary}15;
+  padding: 0.25rem 0.5rem;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  font-weight: 600;
+  white-space: nowrap;
+`;
+
 const SourceInfo = styled.div`
   ${({ theme }) => theme.fonts.Caption};
   color: ${({ theme }) => theme.colors.Slate400};
+  margin-bottom: 0.75rem;
 `;
 
 const Section = styled.div`
@@ -102,14 +156,28 @@ const QuestionText = styled.p`
   line-height: 1.5;
 `;
 
-const AnswerText = styled.p`
+const AnswerText = styled.p<{ $isExpanded: boolean }>`
   ${({ theme }) => theme.fonts.Body2};
   color: ${({ theme }) => theme.colors.Slate700};
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  ${({ $isExpanded }) => !$isExpanded && `
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  `}
+`;
+
+const ExpandHint = styled.div`
+  ${({ theme }) => theme.fonts.Caption};
+  color: ${({ theme }) => theme.colors.Primary};
+  margin-top: 0.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 `;
 
 const Footer = styled.div`

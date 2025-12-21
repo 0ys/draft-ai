@@ -200,7 +200,7 @@ export async function generateDraft(
       question: question,
       answer: node.full_text || node.text || '',
       source: {
-        fileName: node.pdf_name || 'Unknown',
+        fileName: node.original_filename || node.pdf_name || 'Unknown',
         documentId: node.document_id || undefined,
         page: undefined,
         folderId: folderId,

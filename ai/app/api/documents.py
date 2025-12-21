@@ -600,6 +600,25 @@ async def query_documents(
         
         print(f"검색된 노드 수: {len(nodes)}, 활성 문서 수: {len(active_doc_ids)}")
         
+        # document_ids에 대한 original_filename 조회
+        docs_with_names = (
+            db.table("documents")
+            .select("id, original_filename")
+            .in_("id", document_ids)
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .execute()
+        )
+        
+        # document_id -> original_filename 매핑 생성
+        doc_id_to_original_filename = {}
+        if docs_with_names.data:
+            for doc in docs_with_names.data:
+                doc_id = doc.get("id")
+                original_filename = doc.get("original_filename")
+                if doc_id and original_filename:
+                    doc_id_to_original_filename[doc_id] = original_filename
+        
         # 노드 정보 포맷팅 및 PDF별 그룹화 (삭제된 문서 필터링)
         retrieved_nodes = []
         pdf_sources = {}  # PDF별로 그룹화된 정보
@@ -618,12 +637,16 @@ async def query_documents(
                 print(f"document_id가 없는 노드 제외")
                 continue
             
+            # original_filename 가져오기 (없으면 pdf_name 사용)
+            original_filename = doc_id_to_original_filename.get(document_id, pdf_name)
+            
             node_info = {
                 "score": node.score if hasattr(node, 'score') and node.score is not None else None,
                 "text": node.text[:500] if hasattr(node, 'text') and node.text else "",
                 "full_text": node.text if hasattr(node, 'text') and node.text else "",
                 "document_id": document_id,
                 "pdf_name": pdf_name,
+                "original_filename": original_filename,
             }
             retrieved_nodes.append(node_info)
             
@@ -633,6 +656,7 @@ async def query_documents(
                     pdf_sources[document_id] = {
                         "document_id": document_id,
                         "pdf_name": pdf_name,
+                        "original_filename": original_filename,
                         "chunks": [],
                         "max_score": node.score if hasattr(node, 'score') and node.score is not None else 0,
                     }
