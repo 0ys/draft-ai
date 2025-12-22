@@ -8,6 +8,7 @@ const nextConfig = {
     },
   },
   // 구글 OAuth를 위한 헤더 설정
+  // COOP 정책을 제거하거나 완화하여 Google GSI와의 호환성 확보
   async headers() {
     return [
       {
@@ -15,7 +16,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
+            value: 'unsafe-none', // Google GSI와의 호환성을 위해 변경
           },
         ],
       },

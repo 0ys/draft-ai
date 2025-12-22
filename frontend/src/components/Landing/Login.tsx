@@ -48,45 +48,63 @@ export function Login() {
   }, [router]);
 
   useEffect(() => {
-    // Google Identity Services 스크립트 로드
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google) {
-        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-        if (!clientId) {
-          console.error('Google Client ID가 설정되지 않았습니다.');
-          setError('Google Client ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.');
-          return;
+    // Google GSI 스크립트가 로드되었는지 확인
+    if (!window.google) {
+      // 스크립트가 아직 로드되지 않은 경우, 짧은 지연 후 재시도
+      const checkInterval = setInterval(() => {
+        if (window.google) {
+          clearInterval(checkInterval);
+          initializeGoogleSignIn();
         }
+      }, 100);
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleSignIn,
+      // 최대 5초 대기 후 타임아웃
+      setTimeout(() => {
+        clearInterval(checkInterval);
+        if (!window.google) {
+          setError('Google 로그인 스크립트를 로드할 수 없습니다. 페이지를 새로고침해주세요.');
+        }
+      }, 5000);
+
+      return () => clearInterval(checkInterval);
+    } else {
+      initializeGoogleSignIn();
+    }
+
+    function initializeGoogleSignIn() {
+      if (!window.google) return;
+
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        console.error('Google Client ID가 설정되지 않았습니다.');
+        setError('Google Client ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.');
+        return;
+      }
+
+      // 디버깅: 현재 origin과 Client ID 출력
+      const currentOrigin = window.location.origin;
+      console.log('🔍 Google 로그인 디버깅 정보:');
+      console.log('  - Current Origin:', currentOrigin);
+      console.log('  - Client ID:', clientId);
+      console.log('  - Full URL:', window.location.href);
+      console.log('  - ⚠️ Google Console에 다음 origin이 등록되어 있는지 확인하세요:');
+      console.log('    ', currentOrigin);
+
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleSignIn,
+      });
+
+      // 구글 로그인 버튼 렌더링
+      const buttonContainer = document.getElementById('google-signin-button');
+      if (buttonContainer && window.google.accounts.id.renderButton) {
+        window.google.accounts.id.renderButton(buttonContainer, {
+          theme: 'outline',
+          size: 'large',
+          width: '300',
         });
-
-        // 구글 로그인 버튼 렌더링
-        const buttonContainer = document.getElementById('google-signin-button');
-        if (buttonContainer && window.google.accounts.id.renderButton) {
-          window.google.accounts.id.renderButton(buttonContainer, {
-            theme: 'outline',
-            size: 'large',
-            width: '300rem',
-          });
-        }
       }
-    };
-    document.head.appendChild(script);
-
-    return () => {
-      // 컴포넌트 언마운트 시 스크립트 제거
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) {
-        existingScript.remove();
-      }
-    };
+    }
   }, [handleGoogleSignIn]);
 
   return (
