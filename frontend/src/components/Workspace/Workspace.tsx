@@ -55,7 +55,7 @@ export function Workspace({ folders, selectedFolderId, onGenerate }: WorkspacePr
           <QuestionInput
             value={question}
             onChange={setQuestion}
-            placeholder="예: 주민등록증 재발급 절차는 어떻게 되나요?"
+            placeholder="예: 공동주택 층간소음 기준은 무엇인가요?"
           />
         </FormGroup>
 
