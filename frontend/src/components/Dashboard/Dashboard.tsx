@@ -162,6 +162,7 @@ export function Dashboard() {
         await handleLoadDocuments(targetFolderId);
       }
     } else {
+      alert(result.error || '파일 업로드에 실패했습니다.');
       throw new Error(result.error || '업로드 실패');
     }
   };
