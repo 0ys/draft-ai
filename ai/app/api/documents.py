@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import Optional, List
 from pathlib import Path
 from datetime import datetime
@@ -107,7 +107,6 @@ async def index_document_background(
 
 @router.post("/upload")
 async def upload_document(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     folder_id: Optional[str] = None,  # UUID 형식
     user_id: str = "00000000-0000-0000-0000-000000000001",  # UUID 형식으로 변경
@@ -120,8 +119,8 @@ async def upload_document(
     - **folder_id**: 문서를 저장할 폴더 ID (UUID, 선택사항)
     - **user_id**: 사용자 ID (UUID 형식)
     """
-    # 파일 크기 제한: 50MB
-    MAX_FILE_SIZE = 50 * 1024 * 1024
+    # 파일 크기 제한: 5MB
+    MAX_FILE_SIZE = 5 * 1024 * 1024
     
     # 파일 타입 검증
     allowed_types = [
@@ -146,9 +145,10 @@ async def upload_document(
     
     # 파일 크기 검증
     if len(contents) > MAX_FILE_SIZE:
+        file_size_mb = len(contents) / (1024 * 1024)
         raise HTTPException(
             status_code=400,
-            detail="파일 크기는 최대 50MB까지 업로드 가능합니다."
+            detail=f"용량 초과: 파일 크기({file_size_mb:.2f}MB)가 최대 허용 용량(5MB)을 초과했습니다."
         )
     
     # 저장할 파일명 생성 (중복 방지를 위해 타임스탬프 + UUID 사용)
@@ -212,6 +212,7 @@ async def upload_document(
     
     # ============================================
     # 2단계: 즉시 응답 반환 (파일 저장 및 DB 저장 완료)
+    # 인덱싱은 배치 작업에서 주기적으로 처리됩니다.
     # ============================================
     response_data = {
         "success": True,
@@ -224,27 +225,10 @@ async def upload_document(
         "file_path": relative_path,
         "absolute_path": absolute_path,
         "status": initial_status if document_id else "failed",
-        "message": "파일이 성공적으로 업로드되었습니다.",
+        "message": "파일이 성공적으로 업로드되었습니다. 인덱싱은 배치 작업에서 처리됩니다.",
     }
     
-    # ============================================
-    # 3단계: 백그라운드 인덱싱 작업 등록
-    # (응답 반환 후 자동으로 실행됨)
-    # ============================================
-    if document_id and file_extension.lower() == "pdf":
-        # BackgroundTasks는 응답이 클라이언트에 전송된 후에 실행됩니다.
-        # 따라서 파일 저장 및 응답 반환은 즉시 완료되고,
-        # 인덱싱은 백그라운드에서 비동기로 진행됩니다.
-        background_tasks.add_task(
-            index_document_background,
-            document_id=document_id,
-            pdf_path=absolute_path,
-            folder_id=folder_id,
-            user_id=user_id,
-        )
-    
-    # 응답 반환 (이 시점에서 클라이언트는 즉시 응답을 받고,
-    # 인덱싱은 백그라운드에서 시작됩니다)
+    # 응답 반환 (인덱싱은 배치 작업에서 주기적으로 처리됨)
     return response_data
 
 
