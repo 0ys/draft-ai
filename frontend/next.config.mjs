@@ -7,8 +7,21 @@ const nextConfig = {
       bodySizeLimit: '50mb',
     },
   },
-  // Google GSI와의 호환성을 위해 COOP 헤더를 명시적으로 제거하지 않음
-  // (Next.js 기본 설정 사용)
+  // Google GSI와의 호환성을 위해 COOP 헤더를 unsafe-none으로 설정
+  // (Google GSI의 postMessage 호출을 허용)
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'unsafe-none',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

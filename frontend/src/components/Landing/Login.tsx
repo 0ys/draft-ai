@@ -31,15 +31,8 @@ export function Login() {
     setError(null);
 
     try {
-      // 디버깅: 토큰 정보 출력 (처음 50자만)
-      const tokenPreview = response.credential.substring(0, 50) + '...';
-      console.log('🔐 Google ID Token 받음:', tokenPreview);
-      console.log('📤 백엔드로 토큰 전송 중...');
-
       // 백엔드로 구글 ID 토큰 전송
       const result = await googleLogin(response.credential);
-
-      console.log('✅ 로그인 성공:', result.user.email);
 
       // 토큰과 사용자 정보 저장
       setAccessToken(result.access_token);
@@ -48,17 +41,9 @@ export function Login() {
       // 대시보드로 리다이렉트
       router.push('/dashboard');
     } catch (err: any) {
-      console.error('❌ 구글 로그인 실패:', err);
-      console.error('  - Status:', err.response?.status);
-      console.error('  - Status Text:', err.response?.statusText);
-      console.error('  - Error Data:', err.response?.data);
-      console.error('  - Error Message:', err.message);
-      console.error('  - Full Error:', err);
-
       // 401 에러인 경우 상세 정보 표시
       if (err.response?.status === 401) {
         const errorDetail = err.response?.data?.detail || '인증 실패';
-        console.error('🔴 401 인증 실패 상세:', errorDetail);
         setError(`인증 실패: ${errorDetail}. 백엔드 서버와 Google Client ID 설정을 확인해주세요.`);
       } else {
         setError(err.response?.data?.detail || err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
@@ -78,23 +63,9 @@ export function Login() {
 
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
       if (!clientId) {
-        console.error('Google Client ID가 설정되지 않았습니다.');
         setError('Google Client ID가 설정되지 않았습니다. 환경 변수를 확인해주세요.');
         return;
       }
-
-      // 디버깅: 현재 origin과 Client ID 출력
-      const currentOrigin = window.location.origin;
-      console.log('🔍 Google 로그인 디버깅 정보:');
-      console.log('  - Current Origin:', currentOrigin);
-      console.log('  - Client ID:', clientId);
-      console.log('  - Full URL:', window.location.href);
-      console.log('  - User Agent:', navigator.userAgent);
-      console.log('  - Platform:', navigator.platform);
-      console.log('  - Cookie Enabled:', navigator.cookieEnabled);
-      console.log('  - window.google 존재:', !!window.google);
-      console.log('  - window.google.accounts 존재:', !!window.google?.accounts);
-      console.log('  - window.google.accounts.id 존재:', !!window.google?.accounts?.id);
 
       // 기존 버튼 컨테이너 초기화 (중복 렌더링 방지)
       const buttonContainer = document.getElementById('google-signin-button');
@@ -117,10 +88,8 @@ export function Login() {
             width: '300',
           });
           isInitialized = true;
-          console.log('✅ Google 로그인 버튼 초기화 완료');
         }
       } catch (error) {
-        console.error('❌ Google 로그인 초기화 실패:', error);
         setError('Google 로그인 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
       }
     }
