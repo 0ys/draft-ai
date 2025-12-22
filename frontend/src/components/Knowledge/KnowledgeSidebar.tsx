@@ -9,6 +9,7 @@ import { FolderTree } from '@/components/Knowledge/FolderTree';
 import { FileUploadButton } from '@/components/Knowledge/FileUploadButton';
 import { LoadingSpinner } from '@/components/Loading';
 import { SvgIcon } from '@/components/icons';
+import { getUser } from '@/utils/auth';
 
 type KnowledgeSidebarProps = {
   folders: Folder[];
@@ -38,6 +39,7 @@ export function KnowledgeSidebar({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const user = getUser();
 
   // 모달 외부 클릭 시 닫기
   useEffect(() => {
@@ -116,8 +118,8 @@ export function KnowledgeSidebar({
             <SvgIcon name="user" size={20} color={theme.colors.Primary} />
           </Avatar>
           <UserInfo>
-            <UserName>공예슬</UserName>
-            <UserDept>서울시 식품의약부</UserDept>
+            <UserName>{user?.name || '사용자'}</UserName>
+            <UserDept>{user?.email || ''}</UserDept>
           </UserInfo>
           <SettingsButtonContainer>
             <SettingsButton
