@@ -39,7 +39,17 @@ export function KnowledgeSidebar({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const user = getUser();
+  const [user, setUser] = useState<{
+    id: string;
+    email: string;
+    name: string | null;
+    picture: string | null;
+  } | null>(null);
+
+  // 클라이언트에서만 사용자 정보 로드 (Hydration mismatch 방지)
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   // 모달 외부 클릭 시 닫기
   useEffect(() => {
