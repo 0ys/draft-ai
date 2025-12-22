@@ -66,6 +66,7 @@
 ## 🚀 Getting Started (시작하기)
 
 프로젝트를 로컬 환경에서 실행하는 방법입니다.
+vscode 환경 권장합니다.
 
 ### Prerequisites
 * Node.js 18.18.0 이상
@@ -92,7 +93,7 @@ cd ai
 # 가상환경 생성 및 활성화
 python -m venv .venv
 source .venv/bin/activate  # macOS/Linux
-# .venv\Scripts\activate  # Windows
+# source .venv/Scripts/activate  # Windows(git Bash)
 
 # 의존성 설치
 pip install -r requirements.txt
@@ -113,13 +114,11 @@ LLAMA_CLOUD_API_KEY=your_llama_cloud_api_key
 # Google OAuth
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback
 
 # JWT
 JWT_SECRET_KEY=your_jwt_secret_key
-
-# CORS
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=10080
 ```
 
 **Backend 실행:**
