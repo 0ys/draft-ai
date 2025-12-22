@@ -31,8 +31,15 @@ export function Login() {
     setError(null);
 
     try {
+      // 디버깅: 토큰 정보 출력 (처음 50자만)
+      const tokenPreview = response.credential.substring(0, 50) + '...';
+      console.log('🔐 Google ID Token 받음:', tokenPreview);
+      console.log('📤 백엔드로 토큰 전송 중...');
+
       // 백엔드로 구글 ID 토큰 전송
       const result = await googleLogin(response.credential);
+
+      console.log('✅ 로그인 성공:', result.user.email);
 
       // 토큰과 사용자 정보 저장
       setAccessToken(result.access_token);
@@ -41,8 +48,21 @@ export function Login() {
       // 대시보드로 리다이렉트
       router.push('/dashboard');
     } catch (err: any) {
-      console.error('구글 로그인 실패:', err);
-      setError(err.response?.data?.detail || '로그인에 실패했습니다. 다시 시도해주세요.');
+      console.error('❌ 구글 로그인 실패:', err);
+      console.error('  - Status:', err.response?.status);
+      console.error('  - Status Text:', err.response?.statusText);
+      console.error('  - Error Data:', err.response?.data);
+      console.error('  - Error Message:', err.message);
+      console.error('  - Full Error:', err);
+
+      // 401 에러인 경우 상세 정보 표시
+      if (err.response?.status === 401) {
+        const errorDetail = err.response?.data?.detail || '인증 실패';
+        console.error('🔴 401 인증 실패 상세:', errorDetail);
+        setError(`인증 실패: ${errorDetail}. 백엔드 서버와 Google Client ID 설정을 확인해주세요.`);
+      } else {
+        setError(err.response?.data?.detail || err.message || '로그인에 실패했습니다. 다시 시도해주세요.');
+      }
       setIsLoading(false);
     }
   }, [router]);

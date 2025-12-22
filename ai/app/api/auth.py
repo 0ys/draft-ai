@@ -44,12 +44,21 @@ def verify_google_token(token: str) -> dict:
     Raises:
         HTTPException: 토큰 검증 실패 시
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     settings = get_settings()
     if not settings.google_client_id:
+        logger.error("Google Client ID가 설정되지 않았습니다.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Google Client ID가 설정되지 않았습니다."
         )
+    
+    # 디버깅: Client ID 확인 (마지막 20자만)
+    client_id_preview = settings.google_client_id[-20:] if len(settings.google_client_id) > 20 else settings.google_client_id
+    logger.info(f"Google Client ID 사용 중: ...{client_id_preview}")
+    logger.info(f"토큰 길이: {len(token)} 문자")
     
     try:
         request = google.auth.transport.requests.Request()
@@ -57,20 +66,25 @@ def verify_google_token(token: str) -> dict:
             token, request, settings.google_client_id
         )
         
+        logger.info(f"토큰 검증 성공 - Issuer: {id_info.get('iss')}, Email: {id_info.get('email')}")
+        
         # 구글 토큰 검증
         if id_info.get('iss') not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
+            logger.error(f"잘못된 Issuer: {id_info.get('iss')}")
+            raise ValueError(f'Wrong issuer: {id_info.get("iss")}')
             
         return id_info
     except ValueError as e:
+        logger.error(f"토큰 검증 실패 (ValueError): {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"구글 토큰 검증 실패: {str(e)}"
         )
     except Exception as e:
+        logger.error(f"토큰 검증 중 오류 발생: {type(e).__name__}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"구글 토큰 검증 중 오류 발생: {str(e)}"
+            detail=f"구글 토큰 검증 중 오류 발생: {type(e).__name__}: {str(e)}"
         )
 
 
@@ -188,14 +202,30 @@ async def google_login(
     Returns:
         JWT 액세스 토큰과 사용자 정보
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info("Google 로그인 요청 받음")
+    
     # 구글 토큰 검증
-    google_user_info = verify_google_token(request.token)
+    try:
+        google_user_info = verify_google_token(request.token)
+        logger.info(f"토큰 검증 완료 - Email: {google_user_info.get('email')}")
+    except HTTPException as e:
+        logger.error(f"토큰 검증 실패: {e.detail}")
+        raise
     
     # 사용자 조회 또는 생성
-    user = await get_or_create_user(db, google_user_info)
+    try:
+        user = await get_or_create_user(db, google_user_info)
+        logger.info(f"사용자 처리 완료 - ID: {user['id']}, Email: {user['email']}")
+    except HTTPException as e:
+        logger.error(f"사용자 처리 실패: {e.detail}")
+        raise
     
     # JWT 토큰 생성
     access_token = create_access_token(data={"sub": str(user['id'])})
+    logger.info("JWT 토큰 생성 완료")
     
     return TokenResponse(
         access_token=access_token,
