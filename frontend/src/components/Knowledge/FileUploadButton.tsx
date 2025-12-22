@@ -16,10 +16,11 @@ export function FileUploadButton({ onUpload }: FileUploadButtonProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 파일 크기 제한: 50MB
-    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    // 파일 크기 제한: 5MB
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
-      alert('파일 크기는 최대 50MB까지 업로드 가능합니다.');
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      alert(`용량 초과: 파일 크기(${fileSizeMB}MB)가 최대 허용 용량(5MB)을 초과했습니다.`);
       return;
     }
 
@@ -44,7 +45,7 @@ export function FileUploadButton({ onUpload }: FileUploadButtonProps) {
     } catch (error) {
       console.error('파일 업로드 실패:', error);
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
-      alert(`파일 업로드에 실패했습니다`);
+      alert(errorMessage);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
