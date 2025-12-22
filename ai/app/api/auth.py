@@ -63,7 +63,10 @@ def verify_google_token(token: str) -> dict:
     try:
         request = google.auth.transport.requests.Request()
         id_info = google.oauth2.id_token.verify_oauth2_token(
-            token, request, settings.google_client_id
+            token, 
+            request, 
+            settings.google_client_id,
+            clock_skew_in_seconds=10  # 시간 동기화 차이 허용 (10초)
         )
         
         logger.info(f"토큰 검증 성공 - Issuer: {id_info.get('iss')}, Email: {id_info.get('email')}")
