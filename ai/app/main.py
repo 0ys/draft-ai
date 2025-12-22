@@ -2,9 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api import router as api_router
+from .core.config import get_settings
 
 
 def create_app() -> FastAPI:
+    settings = get_settings()
+    
     app = FastAPI(
         title="Draft AI Backend",
         version="0.1.0",
@@ -14,12 +17,16 @@ def create_app() -> FastAPI:
     )
 
     # CORS 설정 (프론트엔드에서 API 호출 허용)
+    # 환경변수에서 허용된 오리진 목록을 가져옴 (쉼표로 구분)
+    allowed_origins = [
+        origin.strip() 
+        for origin in settings.cors_origins.split(",")
+        if origin.strip()
+    ]
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:3000",  # Next.js 개발 서버
-            "http://127.0.0.1:3000",
-        ],
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],

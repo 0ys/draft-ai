@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "draft-ai-secret-key-change-in-production"  # 프로덕션에서는 반드시 변경하세요!
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60 * 24 * 7  # 7일
+    
+    # CORS 설정
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"  # 쉼표로 구분된 허용된 오리진 목록
 
     class Config:
         env_file = ".env"
