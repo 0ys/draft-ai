@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+import atexit
 
 from .api import router as api_router
 from .core.config import get_settings
+from .services.batch_indexing_service import BatchIndexingService
 
 
 def create_app() -> FastAPI:
@@ -45,7 +49,34 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "ok"}
 
+    # 배치 인덱싱 스케줄러 시작
+    _start_batch_scheduler()
+
     return app
+
+
+def _start_batch_scheduler():
+    """배치 인덱싱 스케줄러 시작"""
+    scheduler = BackgroundScheduler()
+    
+    # 배치 인덱싱 서비스 인스턴스 생성
+    batch_service = BatchIndexingService()
+    
+    # 3분마다 배치 작업 실행 (한 번에 최대 5개 문서 처리)
+    scheduler.add_job(
+        func=batch_service.run_batch,
+        trigger=IntervalTrigger(seconds=180),  # 3분 = 180초
+        args=[5],  # 한 번에 최대 5개 문서 처리
+        id='batch_indexing',
+        name='배치 인덱싱 작업',
+        replace_existing=True,
+    )
+    
+    scheduler.start()
+    print("배치 인덱싱 스케줄러가 시작되었습니다. (3분마다 실행)")
+    
+    # 애플리케이션 종료 시 스케줄러 종료
+    atexit.register(lambda: scheduler.shutdown())
 
 
 app = create_app()
