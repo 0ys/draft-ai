@@ -8,20 +8,21 @@ const nextConfig = {
     },
   },
   // 구글 OAuth를 위한 헤더 설정
-  // COOP 정책을 제거하거나 완화하여 Google GSI와의 호환성 확보
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'unsafe-none', // Google GSI와의 호환성을 위해 변경
-          },
-        ],
-      },
-    ];
-  },
+  // COOP 헤더를 제거하여 Google GSI와의 호환성 확보
+  // (COOP 헤더가 Google GSI의 postMessage를 차단할 수 있음)
+  // async headers() {
+  //   return [
+  //     {
+  //       source: '/:path*',
+  //       headers: [
+  //         {
+  //           key: 'Cross-Origin-Opener-Policy',
+  //           value: 'unsafe-none',
+  //         },
+  //       ],
+  //     },
+  //   ];
+  // },
 };
 
 export default nextConfig;

@@ -48,31 +48,13 @@ export function Login() {
   }, [router]);
 
   useEffect(() => {
-    // Google GSI 스크립트가 로드되었는지 확인
-    if (!window.google) {
-      // 스크립트가 아직 로드되지 않은 경우, 짧은 지연 후 재시도
-      const checkInterval = setInterval(() => {
-        if (window.google) {
-          clearInterval(checkInterval);
-          initializeGoogleSignIn();
-        }
-      }, 100);
-
-      // 최대 5초 대기 후 타임아웃
-      setTimeout(() => {
-        clearInterval(checkInterval);
-        if (!window.google) {
-          setError('Google 로그인 스크립트를 로드할 수 없습니다. 페이지를 새로고침해주세요.');
-        }
-      }, 5000);
-
-      return () => clearInterval(checkInterval);
-    } else {
-      initializeGoogleSignIn();
-    }
+    let isInitialized = false;
+    let checkInterval: NodeJS.Timeout | null = null;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     function initializeGoogleSignIn() {
-      if (!window.google) return;
+      // 이미 초기화되었거나 window.google이 없으면 리턴
+      if (isInitialized || !window.google) return;
 
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
       if (!clientId) {
@@ -87,24 +69,70 @@ export function Login() {
       console.log('  - Current Origin:', currentOrigin);
       console.log('  - Client ID:', clientId);
       console.log('  - Full URL:', window.location.href);
-      console.log('  - ⚠️ Google Console에 다음 origin이 등록되어 있는지 확인하세요:');
-      console.log('    ', currentOrigin);
+      console.log('  - User Agent:', navigator.userAgent);
+      console.log('  - Platform:', navigator.platform);
+      console.log('  - Cookie Enabled:', navigator.cookieEnabled);
+      console.log('  - window.google 존재:', !!window.google);
+      console.log('  - window.google.accounts 존재:', !!window.google?.accounts);
+      console.log('  - window.google.accounts.id 존재:', !!window.google?.accounts?.id);
 
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleSignIn,
-      });
-
-      // 구글 로그인 버튼 렌더링
+      // 기존 버튼 컨테이너 초기화 (중복 렌더링 방지)
       const buttonContainer = document.getElementById('google-signin-button');
-      if (buttonContainer && window.google.accounts.id.renderButton) {
-        window.google.accounts.id.renderButton(buttonContainer, {
-          theme: 'outline',
-          size: 'large',
-          width: '300',
+      if (buttonContainer) {
+        // 기존 자식 요소 제거 (이전에 렌더링된 버튼이 있을 수 있음)
+        buttonContainer.innerHTML = '';
+      }
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleSignIn,
         });
+
+        // 구글 로그인 버튼 렌더링
+        if (buttonContainer && window.google.accounts.id.renderButton) {
+          window.google.accounts.id.renderButton(buttonContainer, {
+            theme: 'outline',
+            size: 'large',
+            width: '300',
+          });
+          isInitialized = true;
+          console.log('✅ Google 로그인 버튼 초기화 완료');
+        }
+      } catch (error) {
+        console.error('❌ Google 로그인 초기화 실패:', error);
+        setError('Google 로그인 초기화에 실패했습니다. 페이지를 새로고침해주세요.');
       }
     }
+
+    // Google GSI 스크립트가 로드되었는지 확인
+    if (!window.google) {
+      // 스크립트가 아직 로드되지 않은 경우, 짧은 지연 후 재시도
+      checkInterval = setInterval(() => {
+        if (window.google && !isInitialized) {
+          clearInterval(checkInterval!);
+          initializeGoogleSignIn();
+        }
+      }, 100);
+
+      // 최대 5초 대기 후 타임아웃
+      timeoutId = setTimeout(() => {
+        if (checkInterval) clearInterval(checkInterval);
+        if (!window.google) {
+          setError('Google 로그인 스크립트를 로드할 수 없습니다. 페이지를 새로고침해주세요.');
+        }
+      }, 5000);
+    } else {
+      // 이미 스크립트가 로드된 경우 바로 초기화
+      initializeGoogleSignIn();
+    }
+
+    return () => {
+      // cleanup: interval과 timeout 정리
+      if (checkInterval) clearInterval(checkInterval);
+      if (timeoutId) clearTimeout(timeoutId);
+      // 주의: Google GSI 초기화를 완전히 제거하지 않음 (다른 컴포넌트에서 사용할 수 있음)
+    };
   }, [handleGoogleSignIn]);
 
   return (
